@@ -34,22 +34,12 @@ public:
         STREAM_STATE_TAIL,
         STREAM_STATE_READY
     };
-    typedef enum HOST_MESSAGE {
-        HOST_MESSAGE_SERIAL_ACK,
-        HOST_MESSAGE_COMMS_DOWN,
-        HOST_MESSAGE_COMMS_DOWN_CHAN,
-        HOST_MESSAGE_COMMS_DOWN_POLL_TIME,
-        HOST_MESSAGE_BAUD_FAST,
-        HOST_MESSAGE_BAUD_DEFAULT,
-        HOST_MESSAGE_BAUD_HYPER,
-        HOST_MESSAGE_SYS_UP,
-        HOST_MESSAGE_SYS_DOWN,
-        HOST_MESSAGE_CHAN,
-        HOST_MESSAGE_CHAN_OVERRIDE,
-        HOST_MESSAGE_CHAN_VERIFY,
-        HOST_MESSAGE_CHAN_GET_FAILURE,
-        HOST_MESSAGE_CHAN_GET_SUCCESS,
-        HOST_MESSAGE_POLL_TIME
+    typedef enum STORE_STATE {
+        STORE_STATE_INIT,
+        STORE_STATE_STORING_FIRST,
+        STORE_STATE_STORING_SECOND,
+        STORE_STATE_STORING_THRID,
+        STORE_STATE_READY
     };
     // STRUCTS
     typedef struct {
@@ -72,6 +62,14 @@ public:
         boolean         flushing;
         STREAM_STATE    state;
     } StreamPacketBuffer;
+
+    typedef struct {
+        uint8_t         typeByte;
+        char            data[RFDUINO_BLE_MAX_PACKET_SIZE_BYTES];
+        uint8_t         bytesIn;
+        boolean         flushing;
+        STORE_STATE     state;
+    } BLESendPacketBuffer;
 
     typedef struct {
         boolean flushing;
@@ -104,19 +102,21 @@ public:
     void        bufferRadioReset(BufferRadio *);
     boolean     bufferRadioSwitchToOtherBuffer(void);
     void        bufferResetStreamPacketBuffer(void);
+    void        bufferResetBLESendPacketBuffer(void);
     boolean     bufferSerialAddChar(char);
     boolean     bufferSerialHasData(void);
     void        bufferSerialProcessCommsFailure(void);
     void        bufferSerialReset(uint8_t);
     boolean     bufferSerialTimeout(void);
     void        bufferStreamAddChar(StreamPacketBuffer *, char);
+    void        bufferStreamAddChar(BLESendPacketBuffer *, char);
     boolean     bufferStreamAddData(char *);
-    void        bufferStreamFlush(StreamPacketBuffer *);
     void        bufferStreamFlushBuffers(void);
     boolean     bufferStreamReadyForNewPacket(StreamPacketBuffer *);
     boolean     bufferStreamReadyToSendToHost(StreamPacketBuffer *buf);
     void        bufferStreamReset(void);
     void        bufferStreamReset(StreamPacketBuffer *);
+    void        bufferBLESendReset(BLESendPacketBuffer *);
     boolean     bufferStreamSendToHost(StreamPacketBuffer *buf);
     void        bufferStreamStoreData(StreamPacketBuffer *, char *);
     boolean     bufferStreamTimeout(void);
@@ -231,6 +231,6 @@ public:
 };
 
 // Very important, major key to success #christmas
-extern OpenBCI_Radios_Class radio;
+extern OpenBCI_Radio_BLE_Class radioBLE;
 
 #endif // OPENBCI_RADIO_H

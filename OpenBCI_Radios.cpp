@@ -19,7 +19,7 @@ MIT license
 #include "OpenBCI_Radios.h"
 
 // CONSTRUCTOR
-OpenBCI_Radios_Class::OpenBCI_Radios_Class() {
+OpenBCI_Radio_BLE_Class::OpenBCI_Radio_BLE_Class() {
   // Set defaults
   radioMode = OPENBCI_MODE_DEVICE; // Device mode
   radioChannel = 25; // Channel 18
@@ -35,7 +35,7 @@ OpenBCI_Radios_Class::OpenBCI_Radios_Class() {
 * @param: mode {unint8_t} - The mode the radio shall operate in
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::begin(uint8_t mode) {
+void OpenBCI_Radio_BLE_Class::begin(uint8_t mode) {
   // Save global radio mode
   radioMode = mode;
 
@@ -51,7 +51,7 @@ void OpenBCI_Radios_Class::begin(uint8_t mode) {
 *           NOTE: Must be from 0 - 25
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::begin(uint8_t mode, uint32_t channelNumber) {
+void OpenBCI_Radio_BLE_Class::begin(uint8_t mode, uint32_t channelNumber) {
   // Save global radio mode
   radioMode = mode;
   // Restrict the channel to 0-25 inclusively
@@ -71,7 +71,7 @@ void OpenBCI_Radios_Class::begin(uint8_t mode, uint32_t channelNumber) {
 *           NOTE: Must be from 0 - 25
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::beginDebug(uint8_t mode, uint32_t channelNumber) {
+void OpenBCI_Radio_BLE_Class::beginDebug(uint8_t mode, uint32_t channelNumber) {
   debugMode = true;
   begin(mode,channelNumber);
 }
@@ -79,13 +79,13 @@ void OpenBCI_Radios_Class::beginDebug(uint8_t mode, uint32_t channelNumber) {
 
 
 /**
-* @description Private function to initialize the OpenBCI_Radios_Class object
+* @description Private function to initialize the OpenBCI_Radio_BLE_Class object
 * @param: mode [unint8_t] - The mode the radio shall operate in
 * @param: channelNumber [int8_t] - The channelNumber the RFduinoGZLL will
 *           use to communicate with the other RFduinoGZLL
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::configure(uint8_t mode, uint32_t channelNumber) {
+void OpenBCI_Radio_BLE_Class::configure(uint8_t mode, uint32_t channelNumber) {
   // Quickly check to see if in pass through mode, if so, call and dip out of func
   if (mode == OPENBCI_MODE_PASS_THRU) {
     configurePassThru();
@@ -138,7 +138,7 @@ void OpenBCI_Radios_Class::configure(uint8_t mode, uint32_t channelNumber) {
 * @description Private function to initialize the radio in Device mode
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::configureDevice(void) {
+void OpenBCI_Radio_BLE_Class::configureDevice(void) {
   // Start the RFduinoGZLL in DEVICE0 mode
   RFduinoGZLL.begin(RFDUINOGZLL_ROLE_DEVICE);
 
@@ -174,7 +174,7 @@ void OpenBCI_Radios_Class::configureDevice(void) {
 * @description Private function to initialize the radio in Host mode
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::configureHost(void) {
+void OpenBCI_Radio_BLE_Class::configureHost(void) {
   // Start the RFduinoGZLL in HOST mode
   RFduinoGZLL.begin(RFDUINOGZLL_ROLE_HOST);
 
@@ -203,7 +203,7 @@ void OpenBCI_Radios_Class::configureHost(void) {
 * @description Private function to initialize the radio in Pass Through mode
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::configurePassThru(void) {
+void OpenBCI_Radio_BLE_Class::configurePassThru(void) {
   // Configure the pins
   pinMode(0,OUTPUT_D0H1);  // output is highZ when logic 0, HIGH when logic 1
   pinMode(1,OUTPUT_D0H1);
@@ -218,7 +218,7 @@ void OpenBCI_Radios_Class::configurePassThru(void) {
 * @returns {uint32_t} - The channel number from non-volatile memory
 * @author AJ Keller (@pushtheworldllc)
 */
-uint32_t OpenBCI_Radios_Class::getChannelNumber(void) {
+uint32_t OpenBCI_Radio_BLE_Class::getChannelNumber(void) {
   return *ADDRESS_OF_PAGE(RFDUINOGZLL_FLASH_MEM_ADDR);
 }
 
@@ -227,7 +227,7 @@ uint32_t OpenBCI_Radios_Class::getChannelNumber(void) {
 * @returns {uint32_t} - The poll time from non-volatile memory
 * @author AJ Keller (@pushtheworldllc)
 */
-uint32_t OpenBCI_Radios_Class::getPollTime(void) {
+uint32_t OpenBCI_Radio_BLE_Class::getPollTime(void) {
   return *(ADDRESS_OF_PAGE(RFDUINOGZLL_FLASH_MEM_ADDR) + 1);
 }
 
@@ -236,7 +236,7 @@ uint32_t OpenBCI_Radios_Class::getPollTime(void) {
 * @return {boolean} True if the channel number needs to be set
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::needToSetChannelNumber(void) {
+boolean OpenBCI_Radio_BLE_Class::needToSetChannelNumber(void) {
   return getChannelNumber() == 0xFFFFFFFF;
 }
 
@@ -245,11 +245,11 @@ boolean OpenBCI_Radios_Class::needToSetChannelNumber(void) {
 * @return {boolean} True if the poll time needs to be set
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::needToSetPollTime(void) {
+boolean OpenBCI_Radio_BLE_Class::needToSetPollTime(void) {
   return getPollTime() == 0xFFFFFFFF;
 }
 
-void OpenBCI_Radios_Class::revertToPreviousChannelNumber(void) {
+void OpenBCI_Radio_BLE_Class::revertToPreviousChannelNumber(void) {
   RFduinoGZLL.end();
   RFduinoGZLL.channel = previousRadioChannel;
   RFduinoGZLL.begin(RFDUINOGZLL_ROLE_HOST);
@@ -261,7 +261,7 @@ void OpenBCI_Radios_Class::revertToPreviousChannelNumber(void) {
 * @return {boolean} - see `::setPollTime()`
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::revertToDefaultPollTime(void) {
+boolean OpenBCI_Radio_BLE_Class::revertToDefaultPollTime(void) {
   return setPollTime((uint32_t)OPENBCI_TIMEOUT_PACKET_POLL_MS);
 }
 
@@ -274,7 +274,7 @@ boolean OpenBCI_Radios_Class::revertToDefaultPollTime(void) {
 *      when the channel number is out of bounds.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::setChannelNumber(uint32_t channelNumber) {
+boolean OpenBCI_Radio_BLE_Class::setChannelNumber(uint32_t channelNumber) {
   if (channelNumber > RFDUINOGZLL_CHANNEL_LIMIT_UPPER) {
     return false;
   }
@@ -314,7 +314,7 @@ boolean OpenBCI_Radios_Class::setChannelNumber(uint32_t channelNumber) {
 * @return {boolean} - If the pollTime was successfully set
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::setPollTime(uint32_t pollTime) {
+boolean OpenBCI_Radio_BLE_Class::setPollTime(uint32_t pollTime) {
 
   uint32_t *p = ADDRESS_OF_PAGE(RFDUINOGZLL_FLASH_MEM_ADDR);
   boolean willSetChannel = false;
@@ -350,7 +350,7 @@ boolean OpenBCI_Radios_Class::setPollTime(uint32_t pollTime) {
 * @return {boolean} - `true` if the memory was successfully reset, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::flashNonVolatileMemory(void) {
+boolean OpenBCI_Radio_BLE_Class::flashNonVolatileMemory(void) {
 
   uint32_t *p = ADDRESS_OF_PAGE(RFDUINOGZLL_FLASH_MEM_ADDR);
 
@@ -377,7 +377,7 @@ boolean OpenBCI_Radios_Class::flashNonVolatileMemory(void) {
 * @return {Boolean} - TRUE if there is data to read! FALSE if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::didPCSendDataToHost(void) {
+boolean OpenBCI_Radio_BLE_Class::didPCSendDataToHost(void) {
   if (Serial.available() > 0) {
     return true;
   } else {
@@ -391,7 +391,7 @@ boolean OpenBCI_Radios_Class::didPCSendDataToHost(void) {
 * @returns {boolean} - `true` if enough time has passed since last poll.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::commsFailureTimeout(void) {
+boolean OpenBCI_Radio_BLE_Class::commsFailureTimeout(void) {
   return millis() > (lastTimeHostHeardFromDevice + OPENBCI_TIMEOUT_COMMS_MS);
 }
 
@@ -402,44 +402,44 @@ boolean OpenBCI_Radios_Class::commsFailureTimeout(void) {
 * @returns {boolean} - True if there is a packet ready to send on the host
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::hostPacketToSend(void) {
+boolean OpenBCI_Radio_BLE_Class::hostPacketToSend(void) {
   return packetToSend() && (packetInTXRadioBuffer == false);
 }
 
-void OpenBCI_Radios_Class::printChannelNumber(char c) {
+void OpenBCI_Radio_BLE_Class::printChannelNumber(char c) {
   Serial.print("Channel number: "); Serial.print((int)c); Serial.write(c);
 }
 
-void OpenBCI_Radios_Class::printChannelNumberVerify(void) {
+void OpenBCI_Radio_BLE_Class::printChannelNumberVerify(void) {
   Serial.print("Verify channel number is less than 25");
 }
 
-void OpenBCI_Radios_Class::printBaudRateChangeTo(int b) {
+void OpenBCI_Radio_BLE_Class::printBaudRateChangeTo(int b) {
   Serial.print("Switch your baud rate to ");
   Serial.print(b);
 };
 
-void OpenBCI_Radios_Class::printCommsTimeout(void) {
+void OpenBCI_Radio_BLE_Class::printCommsTimeout(void) {
   Serial.print("Communications timeout - Device failed to poll Host");
 }
 
-void OpenBCI_Radios_Class::printEOT(void) {
+void OpenBCI_Radio_BLE_Class::printEOT(void) {
   Serial.print("$$$");
 }
 
-void OpenBCI_Radios_Class::printFailure(void) {
+void OpenBCI_Radio_BLE_Class::printFailure(void) {
   Serial.print("Failure: ");
 }
 
-void OpenBCI_Radios_Class::printPollTime(char p) {
+void OpenBCI_Radio_BLE_Class::printPollTime(char p) {
   Serial.print("Poll time: "); Serial.print((int)p); Serial.write(p);
 }
 
-void OpenBCI_Radios_Class::printSuccess(void) {
+void OpenBCI_Radio_BLE_Class::printSuccess(void) {
   Serial.print("Success: ");
 }
 
-void OpenBCI_Radios_Class::printValidatedCommsTimeout(void) {
+void OpenBCI_Radio_BLE_Class::printValidatedCommsTimeout(void) {
   printFailure();
   printCommsTimeout();
   printEOT();
@@ -466,7 +466,7 @@ void OpenBCI_Radios_Class::printValidatedCommsTimeout(void) {
 *  `HOST_MESSAGE_SERIAL_ACK` - Writes a serial ack (',') to the Driver/PC
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::printMessageToDriver(uint8_t code) {
+void OpenBCI_Radio_BLE_Class::printMessageToDriver(uint8_t code) {
   switch (code) {
     case HOST_MESSAGE_COMMS_DOWN:
     printValidatedCommsTimeout();
@@ -574,7 +574,7 @@ void OpenBCI_Radios_Class::printMessageToDriver(uint8_t code) {
 *  more than 3 * pollTime.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferSerialProcessCommsFailure(void) {
+void OpenBCI_Radio_BLE_Class::bufferSerialProcessCommsFailure(void) {
   systemUp = false;
   if (isWaitingForNewChannelNumberConfirmation) {
     isWaitingForNewChannelNumberConfirmation = false;
@@ -603,7 +603,7 @@ void OpenBCI_Radios_Class::bufferSerialProcessCommsFailure(void) {
 *  it may contain actionable queries to the OpenBCI Radio system.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::processCommsFailureSinglePacket(void) {
+void OpenBCI_Radio_BLE_Class::processCommsFailureSinglePacket(void) {
   // The first byte needs to match the command key to act on it
   if (bufferSerial.packetBuffer->data[OPENBCI_HOST_PRIVATE_POS_KEY] == OPENBCI_HOST_PRIVATE_CMD_KEY) {
     // Switch on the first byte of the first packet.
@@ -662,7 +662,7 @@ void OpenBCI_Radios_Class::processCommsFailureSinglePacket(void) {
 *                      ACTION_RADIO_SEND_SINGLE_CHAR - Send a secret radio message from singleCharMsg buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::processOutboundBuffer(PacketBuffer *buf) {
+byte OpenBCI_Radio_BLE_Class::processOutboundBuffer(PacketBuffer *buf) {
   if (buf->positionWrite == 3) {
     return processOutboundBufferCharDouble(buf->data);
   } else if (buf->positionWrite == 4) {
@@ -682,7 +682,7 @@ byte OpenBCI_Radios_Class::processOutboundBuffer(PacketBuffer *buf) {
 *                      ACTION_RADIO_SEND_SINGLE_CHAR - Send a secret radio message from singleCharMsg buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::processOutboundBufferForTimeSync(void) {
+boolean OpenBCI_Radio_BLE_Class::processOutboundBufferForTimeSync(void) {
   if (bufferSerial.packetBuffer->positionWrite == 2) {
     if ((char)bufferSerial.packetBuffer->data[1] == (char)OPENBCI_HOST_TIME_SYNC) {
       if (systemUp) {
@@ -719,7 +719,7 @@ boolean OpenBCI_Radios_Class::processOutboundBufferForTimeSync(void) {
 *                      ACTION_RADIO_SEND_SINGLE_CHAR - Send a secret radio message from singleCharMsg buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::processOutboundBufferCharDouble(char *buffer) {
+byte OpenBCI_Radio_BLE_Class::processOutboundBufferCharDouble(char *buffer) {
   // The first byte needs to match the command key to act on it
   if (buffer[OPENBCI_HOST_PRIVATE_POS_KEY] == OPENBCI_HOST_PRIVATE_CMD_KEY) {
     // Decode the char
@@ -807,7 +807,7 @@ byte OpenBCI_Radios_Class::processOutboundBufferCharDouble(char *buffer) {
 *                      ACTION_RADIO_SEND_SINGLE_CHAR - Send a secret radio message from singleCharMsg buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::processOutboundBufferCharTriple(char *buffer) {
+byte OpenBCI_Radio_BLE_Class::processOutboundBufferCharTriple(char *buffer) {
   // The first byte needs to match the command key to act on it
   if (buffer[OPENBCI_HOST_PRIVATE_POS_KEY] == OPENBCI_HOST_PRIVATE_CMD_KEY) {
     switch (buffer[OPENBCI_HOST_PRIVATE_POS_CODE]) {
@@ -881,7 +881,7 @@ byte OpenBCI_Radios_Class::processOutboundBufferCharTriple(char *buffer) {
 * @param `device` {device_t} - The device to send the packet to.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::sendPacketToDevice(device_t device, boolean lockPacketSend) {
+void OpenBCI_Radio_BLE_Class::sendPacketToDevice(device_t device, boolean lockPacketSend) {
   // Build byteId
   int packetNumber = bufferSerial.numberOfPacketsToSend - bufferSerial.numberOfPacketsSent - 1;
 
@@ -930,7 +930,7 @@ void OpenBCI_Radios_Class::sendPacketToDevice(device_t device, boolean lockPacke
 * @return {boolean} - `true` if there is data to read, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::didPicSendDeviceSerialData(void) {
+boolean OpenBCI_Radio_BLE_Class::didPicSendDeviceSerialData(void) {
   return Serial.available() > 0;
 }
 
@@ -938,7 +938,7 @@ boolean OpenBCI_Radios_Class::didPicSendDeviceSerialData(void) {
 * @description Sends a null byte to the host
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::sendPollMessageToHost(void) {
+void OpenBCI_Radio_BLE_Class::sendPollMessageToHost(void) {
   RFduinoGZLL.sendToHost(NULL,0);
 }
 
@@ -947,11 +947,11 @@ void OpenBCI_Radios_Class::sendPollMessageToHost(void) {
 * @param msg {byte} - A single byte to send to the host
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::sendRadioMessageToHost(byte msg) {
+void OpenBCI_Radio_BLE_Class::sendRadioMessageToHost(byte msg) {
   RFduinoGZLL.sendToHost((const char*)msg,1);
 }
 
-void OpenBCI_Radios_Class::setByteIdForPacketBuffer(int packetNumber) {
+void OpenBCI_Radio_BLE_Class::setByteIdForPacketBuffer(int packetNumber) {
   char byteId = byteIdMake(false,packetNumber,(bufferSerial.packetBuffer + bufferSerial.numberOfPacketsSent)->data + 1, (bufferSerial.packetBuffer + bufferSerial.numberOfPacketsSent)->positionWrite - 1);
 
   // Add the byteId to the packet
@@ -964,7 +964,7 @@ void OpenBCI_Radios_Class::setByteIdForPacketBuffer(int packetNumber) {
 * @returns {boolean} - The packet number sent.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::sendPacketToHost(void) {
+boolean OpenBCI_Radio_BLE_Class::sendPacketToHost(void) {
 
   // Reset the stream buffers
   bufferStreamReset();
@@ -992,7 +992,7 @@ boolean OpenBCI_Radios_Class::sendPacketToHost(void) {
 * @description Test to see if a char follows the stream tail byte format
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::isATailByte(uint8_t newChar) {
+boolean OpenBCI_Radio_BLE_Class::isATailByte(uint8_t newChar) {
   return (newChar >> 4) == 0xC;
 }
 
@@ -1000,7 +1000,7 @@ boolean OpenBCI_Radios_Class::isATailByte(uint8_t newChar) {
 * @description Sends a soft reset command to the Pic 32 incase of an emergency.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::resetPic32(void) {
+void OpenBCI_Radio_BLE_Class::resetPic32(void) {
   Serial.write('v');
 }
 
@@ -1014,7 +1014,7 @@ void OpenBCI_Radios_Class::resetPic32(void) {
 * @description Used to flash the led to indicate to the user the device is in pass through mode.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::ledFeedBackForPassThru(void) {
+void OpenBCI_Radio_BLE_Class::ledFeedBackForPassThru(void) {
   digitalWrite(OPENBCI_PIN_HOST_LED,HIGH);
   delay(600);
   digitalWrite(OPENBCI_PIN_HOST_LED,LOW);
@@ -1033,7 +1033,7 @@ void OpenBCI_Radios_Class::ledFeedBackForPassThru(void) {
 * @param length [int] How many bytes to you want to write out?
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::writeBufferToSerial(char *buffer, int length) {
+void OpenBCI_Radio_BLE_Class::writeBufferToSerial(char *buffer, int length) {
   // Make sure we don't seg fault
   if (buffer == NULL) return;
 
@@ -1047,7 +1047,7 @@ void OpenBCI_Radios_Class::writeBufferToSerial(char *buffer, int length) {
 * @description Private function to clear the given buffer of length
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferCleanChar(char *buffer, int bufferLength) {
+void OpenBCI_Radio_BLE_Class::bufferCleanChar(char *buffer, int bufferLength) {
   for (int i = 0; i < bufferLength; i++) {
     buffer[i] = 0;
   }
@@ -1057,7 +1057,7 @@ void OpenBCI_Radios_Class::bufferCleanChar(char *buffer, int bufferLength) {
 * @description Private function to clean a PacketBuffer.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferCleanPacketBuffer(PacketBuffer *packetBuffer, int numberOfPackets) {
+void OpenBCI_Radio_BLE_Class::bufferCleanPacketBuffer(PacketBuffer *packetBuffer, int numberOfPackets) {
   for(int i = 0; i < numberOfPackets; i++) {
     packetBuffer[i].positionRead = 0;
     packetBuffer[i].positionWrite = 1;
@@ -1068,7 +1068,7 @@ void OpenBCI_Radios_Class::bufferCleanPacketBuffer(PacketBuffer *packetBuffer, i
 * @description Private function to clean a PacketBuffer.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferCleanCompletePacketBuffer(PacketBuffer *packetBuffer, int numberOfPackets) {
+void OpenBCI_Radio_BLE_Class::bufferCleanCompletePacketBuffer(PacketBuffer *packetBuffer, int numberOfPackets) {
   for(int i = 0; i < numberOfPackets; i++) {
     packetBuffer[i].positionRead = 0;
     packetBuffer[i].positionWrite = 0;
@@ -1079,7 +1079,7 @@ void OpenBCI_Radios_Class::bufferCleanCompletePacketBuffer(PacketBuffer *packetB
 * @description Private function to clean (clear/reset) a Buffer.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferCleanBuffer(Buffer *buffer, int numberOfPacketsToClean) {
+void OpenBCI_Radio_BLE_Class::bufferCleanBuffer(Buffer *buffer, int numberOfPacketsToClean) {
   bufferCleanPacketBuffer(buffer->packetBuffer,numberOfPacketsToClean);
   buffer->numberOfPacketsToSend = 0;
   buffer->numberOfPacketsSent = 0;
@@ -1090,7 +1090,7 @@ void OpenBCI_Radios_Class::bufferCleanBuffer(Buffer *buffer, int numberOfPackets
 * @description Private function to clean (clear/reset) a Buffer.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferCleanCompleteBuffer(Buffer *buffer, int numberOfPacketsToClean) {
+void OpenBCI_Radio_BLE_Class::bufferCleanCompleteBuffer(Buffer *buffer, int numberOfPacketsToClean) {
   bufferCleanCompletePacketBuffer(buffer->packetBuffer,numberOfPacketsToClean);
   buffer->numberOfPacketsToSend = 0;
   buffer->numberOfPacketsSent = 0;
@@ -1110,7 +1110,7 @@ void OpenBCI_Radios_Class::bufferCleanCompleteBuffer(Buffer *buffer, int numberO
 *      buffer was overflowed.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioAddData(BufferRadio *buf, char *data, int len, boolean lastPacket) {
+boolean OpenBCI_Radio_BLE_Class::bufferRadioAddData(BufferRadio *buf, char *data, int len, boolean lastPacket) {
   if (lastPacket) {
     buf->gotAllPackets = true;
   }
@@ -1133,7 +1133,7 @@ boolean OpenBCI_Radios_Class::bufferRadioAddData(BufferRadio *buf, char *data, i
 * @param `buf` {BufferRadio *} - The buffer to clean.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioClean(BufferRadio *buf) {
+void OpenBCI_Radio_BLE_Class::bufferRadioClean(BufferRadio *buf) {
   bufferCleanChar(buf->data,OPENBCI_BUFFER_LENGTH_MULTI);
 }
 
@@ -1143,7 +1143,7 @@ void OpenBCI_Radios_Class::bufferRadioClean(BufferRadio *buf) {
 * @param `buf` {BufferRadio *} - The buffer to flush.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioFlush(BufferRadio *buf) {
+void OpenBCI_Radio_BLE_Class::bufferRadioFlush(BufferRadio *buf) {
   // Lock this buffer down!
   buf->flushing = true;
   if (debugMode) {
@@ -1164,7 +1164,7 @@ void OpenBCI_Radios_Class::bufferRadioFlush(BufferRadio *buf) {
 *  the serial port.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioFlushBuffers(void) {
+void OpenBCI_Radio_BLE_Class::bufferRadioFlushBuffers(void) {
   for (int i = 0; i < OPENBCI_NUMBER_RADIO_BUFFERS; i++) {
     bufferRadioProcessSingle(bufferRadio + i);
   }
@@ -1177,11 +1177,11 @@ void OpenBCI_Radios_Class::bufferRadioFlushBuffers(void) {
 * @returns {boolean} - `true` if the radio buffer has data, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioHasData(BufferRadio *buf) {
+boolean OpenBCI_Radio_BLE_Class::bufferRadioHasData(BufferRadio *buf) {
   return buf->positionWrite > 0;
 }
 
-byte OpenBCI_Radios_Class::bufferRadioProcessPacket(char *data, int len) {
+byte OpenBCI_Radio_BLE_Class::bufferRadioProcessPacket(char *data, int len) {
   // The packetNumber is embedded in the first byte, the byteId
   int packetNumber = byteIdGetPacketNumber(data[0]);
   // Last packet
@@ -1290,7 +1290,7 @@ byte OpenBCI_Radios_Class::bufferRadioProcessPacket(char *data, int len) {
 *  make sure we don't flush a buffer unless it's really ready!
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioProcessSingle(BufferRadio *buf) {
+void OpenBCI_Radio_BLE_Class::bufferRadioProcessSingle(BufferRadio *buf) {
   if (bufferRadioHasData(buf) && buf->gotAllPackets) {
     // Flush radio buffer to the driver
     bufferRadioFlush(buf);
@@ -1305,7 +1305,7 @@ void OpenBCI_Radios_Class::bufferRadioProcessSingle(BufferRadio *buf) {
 * @returns {boolen} - `true` if there is no lock on `buf`
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
+boolean OpenBCI_Radio_BLE_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
   return !buf->flushing && !bufferRadioHasData(buf);
 }
 
@@ -1314,7 +1314,7 @@ boolean OpenBCI_Radios_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
 * @param `buf` {BufferRadio *} - The buffer to reset.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioReset(BufferRadio *buf) {
+void OpenBCI_Radio_BLE_Class::bufferRadioReset(BufferRadio *buf) {
   buf->flushing = false;
   buf->gotAllPackets = false;
   buf->positionWrite = 0;
@@ -1327,7 +1327,7 @@ void OpenBCI_Radios_Class::bufferRadioReset(BufferRadio *buf) {
 *  `false` if the swap was not able to occur.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioSwitchToOtherBuffer(void) {
+boolean OpenBCI_Radio_BLE_Class::bufferRadioSwitchToOtherBuffer(void) {
   if (OPENBCI_NUMBER_RADIO_BUFFERS == 2) {
     // current radio buffer is set to the first one
     if (currentRadioBuffer == bufferRadio) {
@@ -1354,7 +1354,7 @@ boolean OpenBCI_Radios_Class::bufferRadioSwitchToOtherBuffer(void) {
 *  `false` on serial buffer overflow.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialAddChar(char newChar) {
+boolean OpenBCI_Radio_BLE_Class::bufferSerialAddChar(char newChar) {
   // Is the serial buffer overflowed?
   if (bufferSerial.overflowed) {
     // End the subroutine
@@ -1407,7 +1407,7 @@ boolean OpenBCI_Radios_Class::bufferSerialAddChar(char newChar) {
 *  serial buffer, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialHasData(void) {
+boolean OpenBCI_Radio_BLE_Class::bufferSerialHasData(void) {
   return bufferSerial.numberOfPacketsSent < bufferSerial.numberOfPacketsToSend;
 }
 
@@ -1419,7 +1419,7 @@ boolean OpenBCI_Radios_Class::bufferSerialHasData(void) {
 *      packets actually used.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferSerialReset(uint8_t n) {
+void OpenBCI_Radio_BLE_Class::bufferSerialReset(uint8_t n) {
   bufferCleanBuffer(&bufferSerial, n);
   currentPacketBufferSerial = bufferSerial.packetBuffer;
   // previousPacketNumber = 0;
@@ -1431,7 +1431,7 @@ void OpenBCI_Radios_Class::bufferSerialReset(uint8_t n) {
 * @returns {boolean} - `true` if enough time has passed, `false` if not.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialTimeout(void) {
+boolean OpenBCI_Radio_BLE_Class::bufferSerialTimeout(void) {
   return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_NRML_uS);
 }
 
@@ -1442,7 +1442,7 @@ boolean OpenBCI_Radios_Class::bufferSerialTimeout(void) {
 * @param `newChar` {char} - A new char to process
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferStreamAddChar(StreamPacketBuffer *buf, char newChar) {
+void OpenBCI_Radio_BLE_Class::bufferStreamAddChar(StreamPacketBuffer *buf, char newChar) {
   // Process the new char
   switch (buf->state) {
     case STREAM_STATE_TAIL:
@@ -1521,7 +1521,7 @@ void OpenBCI_Radios_Class::bufferStreamAddChar(StreamPacketBuffer *buf, char new
 *  return `true`, however this allows for greater flexiblity in the future.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferStreamAddData(char *data) {
+boolean OpenBCI_Radio_BLE_Class::bufferStreamAddData(char *data) {
 
   bufferStreamStoreData(streamPacketBuffer + streamPacketBufferHead, data);
 
@@ -1534,29 +1534,13 @@ boolean OpenBCI_Radios_Class::bufferStreamAddData(char *data) {
 }
 
 /**
-* @description Used to flush a StreamPacketBuffer to the serial port with a
-*  head byte and a formated tail byte based off the `typeByte`.
-* @param `buf` {StreamPacketBuffer *} - The stream packet buffer to add the char to.
-* @author AJ Keller (@pushtheworldllc)
-**/
-void OpenBCI_Radios_Class::bufferStreamFlush(StreamPacketBuffer *buf) {
-  buf->flushing = true;
-  Serial.write(0xA0);
-  for (int i = 0; i < OPENBCI_MAX_DATA_BYTES_IN_PACKET; i++) {
-    Serial.write(buf->data[i]);
-  }
-  Serial.write(buf->typeByte);
-  buf->flushing = false;
-}
-
-/**
 * @description Used to flush a StreamPacketBuffer if the `streamPacketBufferTail`
 *  is not equal to the `streamPacketBufferHead`. This function will also reset
 *  the buffer after the buffer is flushed. Further it will increment `streamPacketBufferTail`
 *  and wrap that around if necessary.
 * @author AJ Keller (@pushtheworldllc)
 **/
-void OpenBCI_Radios_Class::bufferStreamFlushBuffers(void) {
+void OpenBCI_Radio_BLE_Class::bufferStreamFlushBuffers(void) {
   if (streamPacketBufferTail != streamPacketBufferHead) {
     bufferStreamFlush(streamPacketBuffer + streamPacketBufferTail);
     bufferStreamReset(streamPacketBuffer + streamPacketBufferTail);
@@ -1574,7 +1558,7 @@ void OpenBCI_Radios_Class::bufferStreamFlushBuffers(void) {
 * @param `buf` {StreamPacketBuffer *} - The stream packet buffer to add the char to.
 * @author AJ Keller (@pushtheworldllc)
 **/
-boolean OpenBCI_Radios_Class::bufferStreamReadyForNewPacket(StreamPacketBuffer *buf) {
+boolean OpenBCI_Radio_BLE_Class::bufferStreamReadyForNewPacket(StreamPacketBuffer *buf) {
   return buf->bytesIn == 0 && !buf->flushing;
 }
 
@@ -1586,7 +1570,7 @@ boolean OpenBCI_Radios_Class::bufferStreamReadyForNewPacket(StreamPacketBuffer *
 * @returns {boolean} - `true` is the `buf` is in the ready state, `false` otherwise.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferStreamReadyToSendToHost(StreamPacketBuffer *buf) {
+boolean OpenBCI_Radio_BLE_Class::bufferStreamReadyToSendToHost(StreamPacketBuffer *buf) {
   return radio.streamPacketBuffer->state == radio.STREAM_STATE_READY;
 }
 
@@ -1594,7 +1578,7 @@ boolean OpenBCI_Radios_Class::bufferStreamReadyToSendToHost(StreamPacketBuffer *
 * @description Resets the stream packet buffer to default settings
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferStreamReset(void) {
+void OpenBCI_Radio_BLE_Class::bufferStreamReset(void) {
   for (int i = 0; i < OPENBCI_NUMBER_STREAM_BUFFERS; i++) {
     bufferStreamReset(streamPacketBuffer + i);
   }
@@ -1607,7 +1591,7 @@ void OpenBCI_Radios_Class::bufferStreamReset(void) {
 * @param `buf` {StreamPacketBuffer *} - Pointer to a stream packet buffer to reset
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferStreamReset(StreamPacketBuffer *buf) {
+void OpenBCI_Radio_BLE_Class::bufferStreamReset(StreamPacketBuffer *buf) {
   buf->flushing = false;
   buf->bytesIn = 0;
   buf->typeByte = 0;
@@ -1620,7 +1604,7 @@ void OpenBCI_Radios_Class::bufferStreamReset(StreamPacketBuffer *buf) {
 * @returns {boolean} - `true` when the packet has been added to the TX buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferStreamSendToHost(StreamPacketBuffer *buf) {
+boolean OpenBCI_Radio_BLE_Class::bufferStreamSendToHost(StreamPacketBuffer *buf) {
 
   byte packetType = byteIdMakeStreamPacketType(buf->typeByte);
 
@@ -1654,7 +1638,7 @@ boolean OpenBCI_Radios_Class::bufferStreamSendToHost(StreamPacketBuffer *buf) {
 *   from the radio.
 * @author AJ Keller (@pushtheworldllc)
 **/
-void OpenBCI_Radios_Class::bufferStreamStoreData(StreamPacketBuffer *buf, char *data) {
+void OpenBCI_Radio_BLE_Class::bufferStreamStoreData(StreamPacketBuffer *buf, char *data) {
   buf->bytesIn = OPENBCI_MAX_DATA_BYTES_IN_PACKET;
   buf->typeByte = outputGetStopByteFromByteId(data[0]);
   for (int i = 0; i < OPENBCI_MAX_DATA_BYTES_IN_PACKET; i++) {
@@ -1668,7 +1652,7 @@ void OpenBCI_Radios_Class::bufferStreamStoreData(StreamPacketBuffer *buf, char *
 * @returns {boolean} - `true` if enough time has passed, `false` if not.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferStreamTimeout(void) {
+boolean OpenBCI_Radio_BLE_Class::bufferStreamTimeout(void) {
   return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_STREAM_uS);
 }
 
@@ -1685,7 +1669,7 @@ boolean OpenBCI_Radios_Class::bufferStreamTimeout(void) {
 *           Bits[2:0] - The check sum
 * @author AJ Keller (@pushtheworldllc)
 */
-char OpenBCI_Radios_Class::byteIdMake(boolean isStreamPacket, uint8_t packetNumber, char *data, uint8_t length) {
+char OpenBCI_Radio_BLE_Class::byteIdMake(boolean isStreamPacket, uint8_t packetNumber, char *data, uint8_t length) {
   // Set output initially equal to 0
   char output = 0x00;
 
@@ -1705,7 +1689,7 @@ char OpenBCI_Radios_Class::byteIdMake(boolean isStreamPacket, uint8_t packetNumb
 * @returns [int] the check sum
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::byteIdGetIsStream(uint8_t byteId) {
+boolean OpenBCI_Radio_BLE_Class::byteIdGetIsStream(uint8_t byteId) {
   return byteId > 0x7F;
 }
 
@@ -1715,7 +1699,7 @@ boolean OpenBCI_Radios_Class::byteIdGetIsStream(uint8_t byteId) {
 * @returns [int] the packetNumber
 * @author AJ Keller (@pushtheworldllc)
 */
-int OpenBCI_Radios_Class::byteIdGetPacketNumber(uint8_t byteId) {
+int OpenBCI_Radio_BLE_Class::byteIdGetPacketNumber(uint8_t byteId) {
   return (int)((byteId & 0x78) >> 3);
 }
 
@@ -1725,7 +1709,7 @@ int OpenBCI_Radios_Class::byteIdGetPacketNumber(uint8_t byteId) {
 * @returns [byte] the packet type
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::byteIdGetStreamPacketType(uint8_t byteId) {
+byte OpenBCI_Radio_BLE_Class::byteIdGetStreamPacketType(uint8_t byteId) {
   return (byte)((byteId & 0x78) >> 3);
 }
 
@@ -1734,34 +1718,8 @@ byte OpenBCI_Radios_Class::byteIdGetStreamPacketType(uint8_t byteId) {
 * @returns [byte] the packet type
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::byteIdMakeStreamPacketType(uint8_t typeByte) {
+byte OpenBCI_Radio_BLE_Class::byteIdMakeStreamPacketType(uint8_t typeByte) {
   return typeByte & 0x0F;
-}
-
-/**
-* @description Send a NULL packet to the HOST
-* @author AJ Keller (@pushtheworldllc)
-*/
-void OpenBCI_Radios_Class::pollHost(void) {
-  RFduinoGZLL.sendToHost(NULL,0);
-  pollRefresh();
-}
-
-/**
-* @description Has enough time passed since the last poll
-* @return [boolean]
-* @author AJ Keller (@pushtheworldllc)
-*/
-boolean OpenBCI_Radios_Class::pollNow(void) {
-  return millis() - timeOfLastPoll > pollTime;
-}
-
-/**
-* @description Reset the time since last packent sent to HOST. Very important with polling.
-* @author AJ Keller (@pushtheworldllc)
-*/
-void OpenBCI_Radios_Class::pollRefresh(void) {
-  timeOfLastPoll = millis();
 }
 
 /**
@@ -1772,202 +1730,11 @@ void OpenBCI_Radios_Class::pollRefresh(void) {
 * @example byteId == 0b10111000 returns 0b11000111
 * @author AJ Keller (@pushtheworldllc)
 */
-byte OpenBCI_Radios_Class::outputGetStopByteFromByteId(char byteId) {
+byte OpenBCI_Radio_BLE_Class::outputGetStopByteFromByteId(char byteId) {
   return byteIdGetStreamPacketType(byteId) | 0xC0;
 }
 
-OpenBCI_Radios_Class radio;
-
-
-/********************************************/
-/********************************************/
-/*******    RFDUINOGZLL DELEGATE    *********/
-/********************************************/
-/********************************************/
-
-/**
-* @description Used to process a single char message recieved on the Host
-*      radio aka a private radio message.
-* @param newChar {char} - The char to be read in
-* @return {boolean} - True if a packet should be sent from the serial buffer
-* @author AJ Keller (@pushtheworldllc)
-*/
-boolean OpenBCI_Radios_Class::processRadioCharHost(device_t device, char newChar) {
-
-  switch (newChar) {
-    case ORPM_PACKET_PAGE_REJECT:
-    // Start the page transmission over again
-    bufferSerial.numberOfPacketsSent = 0;
-    // Wait a little bit to let the Device finish
-    delay(10);
-
-    return true;
-
-    case ORPM_PACKET_MISSED:
-    // Start the page transmission over again
-    bufferSerial.numberOfPacketsSent = 0;
-
-    return true;
-
-    case ORPM_CHANGE_CHANNEL_DEVICE_READY:
-    // We are the Host, and the device is ready to change it's channel number to what every we want
-    if (setChannelNumber(radioChannel)) { // Returns true if successful
-      // send back the radio channel
-      singleCharMsg[0] = (char)radioChannel;
-      isWaitingForNewChannelNumberConfirmation = true;
-      channelNumberSaveAttempted = false;
-      RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-      packetInTXRadioBuffer = true;
-
-    } else {
-      // Tell device to switch to the previous channel number
-      radioChannel = getChannelNumber();
-      singleCharMsg[0] = (char)radioChannel;
-      RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-      packetInTXRadioBuffer = true;
-    }
-    return false;
-
-    case ORPM_CHANGE_POLL_TIME_DEVICE_READY:
-    // Get the poll time from memory... should have been stored here before
-    singleCharMsg[0] = (char)pollTime;
-    setPollTime(pollTime);
-    RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-    packetInTXRadioBuffer = true;
-    isWaitingForNewPollTimeConfirmation = true;
-    return false;
-
-    case ORPM_DEVICE_SERIAL_OVERFLOW:
-    Serial.print("Failure: Board RFduino buffer overflowed. Soft reset command sent to Board.$$$");
-    // TODO : Decide if this is a good idea
-    // singleCharMsg[0] = 'v';
-    // RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-    packetInTXRadioBuffer = true;
-    return false;
-
-    case ORPM_INVALID_CODE_RECEIVED:
-    // Working theory
-    return false;
-
-    default:
-    singleCharMsg[0] = (char)ORPM_INVALID_CODE_RECEIVED;
-    RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-    packetInTXRadioBuffer = true;
-    return false;
-  }
-
-}
-
-/**
-* @description Used to process a single char message received on the Device
-*      radio aka a private radio message.
-* @param newChar {char} - The char to be read in
-* @return {boolean} - `true` if a packet should be sent from the serial buffer
-* @author AJ Keller (@pushtheworldllc)
-*/
-boolean OpenBCI_Radios_Class::processRadioCharDevice(char newChar) {
-  if (isWaitingForNewChannelNumber) {
-    isWaitingForNewChannelNumber = false;
-    // Refresh poll
-    pollRefresh();
-    // Set the new channel number
-    boolean success = setChannelNumber((uint32_t)newChar);
-    if (success) {
-      // Poll the host, which will swap after this...
-      pollHost();
-      delay(30);
-      // Change Device radio channel
-      RFduinoGZLL.end();
-      RFduinoGZLL.channel = (uint32_t)newChar;
-      RFduinoGZLL.begin(RFDUINOGZLL_ROLE_DEVICE);
-
-    }
-    return false;
-
-  } else if (isWaitingForNewPollTime) {
-    isWaitingForNewPollTime = false;
-    // Refresh poll
-    pollRefresh();
-    // Set the new poll time
-    boolean success = setPollTime((uint32_t)newChar);
-    if (success) {
-      // Change Device poll time
-      pollTime = getPollTime();
-      // Poll the host
-      pollHost();
-    }
-    return false;
-
-  } else {
-    switch (newChar) {
-      case ORPM_PACKET_PAGE_REJECT:
-      // Start the page transmission over again
-      bufferSerial.numberOfPacketsSent = 0;
-      // Wait a little bit to let the Host finish
-      delay(10);
-
-      return true;
-
-      case ORPM_PACKET_MISSED:
-      // Start the page transmission over again
-      bufferSerial.numberOfPacketsSent = 0;
-      return true;
-
-      case ORPM_CHANGE_CHANNEL_HOST_REQUEST:
-      // The host want to change the channel!
-      // We need to tell the Host we acknoledge his request and are
-      // Patiently waiting for the channel he wants to change to
-
-      // Tell the Host we are ready to change channels
-      isWaitingForNewChannelNumber = true;
-      singleCharMsg[0] = (char)ORPM_CHANGE_CHANNEL_DEVICE_READY;
-      RFduinoGZLL.sendToHost(singleCharMsg,1);
-      pollRefresh();
-      return false;
-
-      case ORPM_CHANGE_POLL_TIME_HOST_REQUEST:
-      // We are the device and we just got asked if we want to change
-      //  our poll time
-      // Now we have to wait for the new poll time
-      isWaitingForNewPollTime = true;
-      singleCharMsg[0] = (char)ORPM_CHANGE_POLL_TIME_DEVICE_READY;
-      RFduinoGZLL.sendToHost(singleCharMsg,1);
-      pollRefresh();
-      return false;
-
-      case ORPM_GET_POLL_TIME:
-      // If there are no packets to send
-      bufferSerialAddChar('S');
-      bufferSerialAddChar('u');
-      bufferSerialAddChar('c');
-      bufferSerialAddChar('c');
-      bufferSerialAddChar('e');
-      bufferSerialAddChar('s');
-      bufferSerialAddChar('s');
-      bufferSerialAddChar(':');
-      bufferSerialAddChar(' ');
-      bufferSerialAddChar('0');
-      bufferSerialAddChar('x');
-      bufferSerialAddChar((char)getPollTime());
-      bufferSerialAddChar('$');
-      bufferSerialAddChar('$');
-      bufferSerialAddChar('$');
-      pollRefresh();
-      return true;
-
-      case ORPM_INVALID_CODE_RECEIVED:
-      // Working theory
-      return false;
-
-      default:
-      // Send the invalid code recieved message
-      singleCharMsg[0] = (char)ORPM_INVALID_CODE_RECEIVED;
-      RFduinoGZLL.sendToHost(singleCharMsg,1);
-      pollRefresh();
-      return false; // Don't send a packet
-    }
-  }
-}
+OpenBCI_Radio_BLE_Class radioBLE;
 
 /**
 * @description Used to determine if there are packets in the serial buffer to be sent.
@@ -1975,7 +1742,7 @@ boolean OpenBCI_Radios_Class::processRadioCharDevice(char newChar) {
 *  has passed
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::packetToSend(void) {
+boolean OpenBCI_Radio_BLE_Class::packetToSend(void) {
   return packetsInSerialBuffer() && serialWriteTimeOut();
 }
 
@@ -1984,7 +1751,7 @@ boolean OpenBCI_Radios_Class::packetToSend(void) {
 * @returns {boolean} - True if there are packets in the buffer
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::packetsInSerialBuffer(void) {
+boolean OpenBCI_Radio_BLE_Class::packetsInSerialBuffer(void) {
   return bufferSerial.numberOfPacketsSent < bufferSerial.numberOfPacketsToSend;
 }
 
@@ -1994,7 +1761,7 @@ boolean OpenBCI_Radios_Class::packetsInSerialBuffer(void) {
 * @returns {boolean} - `true` if enough time has passed
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::serialWriteTimeOut(void) {
+boolean OpenBCI_Radio_BLE_Class::serialWriteTimeOut(void) {
   return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_NRML_uS);
 }
 
@@ -2006,7 +1773,7 @@ boolean OpenBCI_Radios_Class::serialWriteTimeOut(void) {
 * @returns {boolean} - `true` if there is a packet to send to the Host.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::processDeviceRadioCharData(char *data, int len) {
+boolean OpenBCI_Radio_BLE_Class::processDeviceRadioCharData(char *data, int len) {
   // We enter this if statement if we got a packet with length greater than
   //  1. If we recieve a packet with packetNumber equal to 0, then we can set
   //  a flag to write the radio buffer.
@@ -2049,54 +1816,4 @@ boolean OpenBCI_Radios_Class::processDeviceRadioCharData(char *data, int len) {
     }
     break;
   }
-}
-
-/**
-* @description Entered from RFduinoGZLL_onReceive if the Host receives a
-*  packet of length greater than 1.
-* @param `device` {device_t} - The device that sent a packet to the Host.
-* @param `data` {volatile char *} - The data buffer to process.
-* @param `len` {int} - The length of `data`
-* @returns {boolean} - `true` if there is a packet to send to the Device.
-* @author AJ Keller (@pushtheworldllc)
-*/
-boolean OpenBCI_Radios_Class::processHostRadioCharData(device_t device, char *data, int len) {
-
-  if (byteIdGetIsStream(data[0])) {
-    // We don't actually read to serial port yet, we simply move it
-    //  into a buffer in an effort to not write to the Serial port
-    //  from an ISR.
-    bufferStreamAddData(data);
-    // Check to see if there is a packet to send back
-    return hostPacketToSend();
-  }
-
-  switch (bufferRadioProcessPacket(data,len)) {
-    case OPENBCI_PROCESS_RADIO_FAIL_SWITCH_LAST:
-    case OPENBCI_PROCESS_RADIO_FAIL_SWITCH_NOT_LAST:
-    singleCharMsg[0] = (char)ORPM_PACKET_PAGE_REJECT;
-    RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-    return false;
-
-    case OPENBCI_PROCESS_RADIO_FAIL_MISSED_LAST:
-    case OPENBCI_PROCESS_RADIO_FAIL_MISSED_NOT_LAST:
-    // Not able to process the packet
-    singleCharMsg[0] = (char)ORPM_PACKET_MISSED;
-    RFduinoGZLL.sendToDevice(device,singleCharMsg,1);
-    bufferRadioReset(currentRadioBuffer);
-    return false;
-
-    default:
-    break;
-  }
-
-  if (hostPacketToSend()) {
-    return true;
-  } else if (bufferSerial.numberOfPacketsSent == bufferSerial.numberOfPacketsToSend && bufferSerial.numberOfPacketsToSend != 0) {
-    // Serial.println("Cleaning Hosts's bufferSerial");
-    // Clear buffer
-    bufferSerialReset(bufferSerial.numberOfPacketsSent);
-    return false;
-  }
-
 }

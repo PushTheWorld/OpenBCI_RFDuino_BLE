@@ -11,7 +11,7 @@
 *  you downloaded from github. Free to use and share. This code presented for
 *  use as-is.
 */
-#include <RFduinoGZLL.h>
+#include <RFduinoBLE.h>
 #include "OpenBCI_Radios.h"
 
 void setup() {
@@ -19,7 +19,7 @@ void setup() {
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
   // MAKE SURE THIS CHANNEL NUMBER MATCHES THE HOST!
-  radio.begin(OPENBCI_MODE_DEVICE,20);
+  radioBLE.begin();
 }
 
 void loop() {
@@ -44,7 +44,7 @@ void loop() {
     radio.singleCharMsg[0] = (char)ORPM_DEVICE_SERIAL_OVERFLOW;
 
     if (RFduinoGZLL.sendToHost(radio.singleCharMsg,1)) {
-      radio.bufferSerial.overflowed = false;  
+      radio.bufferSerial.overflowed = false;
     }
   } else {
     if (Serial.available()) { // Is there new serial data available?
@@ -60,7 +60,7 @@ void loop() {
     }
 
     if ((radio.streamPacketBuffer + radio.streamPacketBufferHead)->state == radio.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
-      // Has 92uS passed since the last time we read from the serial port?
+      // Load the packet into the BLESendPacketBuffer
       if (radio.bufferStreamTimeout()) {
         // We are sure this is a streaming packet.
         radio.streamPacketBufferHead++;
@@ -113,26 +113,13 @@ void loop() {
 * @param data {char *} - The packet of data sent in the packet
 * @param len {int} - The length of the `data` packet
 */
-void RFduinoGZLL_onReceive(device_t device, int rssi, char *data, int len) {
+void RFduinoBLE_onReceive(int rssi, char *data, int len) {
   // Set send data packet flag to false
   boolean sendDataPacket = false;
   // Is the length of the packer equal to one?
-  if (len == 1) {
-    // Enter process single char subroutine
-    sendDataPacket = radio.processRadioCharDevice(data[0]);
-    // Is the length of the packet greater than one?
-  } else if (len > 1) {
+  if (len > 1) {
     // Enter process char data packet subroutine
     sendDataPacket = radio.processDeviceRadioCharData(data,len);
-  } else {
-    // Are there packets waiting to be sent and was the Serial port read
-    //  more then 3 ms ago?
-    sendDataPacket = radio.packetToSend();
-    if (sendDataPacket == false) {
-      if (radio.bufferSerial.numberOfPacketsSent > 0) {
-        radio.bufferSerialReset(radio.bufferSerial.numberOfPacketsSent);
-      }
-    }
   }
 
   // Is the send data packet flag set to true
