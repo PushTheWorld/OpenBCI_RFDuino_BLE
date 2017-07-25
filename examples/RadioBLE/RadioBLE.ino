@@ -37,7 +37,8 @@ an iPhone application.  Each packet is different, so
 that the iPhone application can verify if any data or
 packets were dropped.
 */
-
+#define NUM_BYTES_INPUT_BUFFER 50
+#define NUM_BYTES_BLE_PACKET 20
 #include <RFduinoBLE.h>
 
 // send 500 20 byte buffers = 10000 bytes
@@ -49,6 +50,13 @@ int flag = false;
 // variables used in packet generation
 int ch;
 int packet;
+volatile boolean newChar = false;
+uint8_t inputBuffer[NUM_BYTES_INPUT_BUFFER];
+volatile uint8_t inputBufferHead = 0;
+volatile uint8_t inputBufferTail = 0;
+
+uint8_t outputBuffer[NUM_BYTES_BLE_PACKET];
+uint8_t outputBufferPosition = 0;
 
 int start;
 
@@ -65,6 +73,19 @@ void setup() {
   RFduinoBLE.begin();
 }
 
+void serialEvent(void){
+  if (inputBufferHead >= NUM_BYTES_INPUT_BUFFER) {
+    inputBufferHead = 0;
+  }
+  inputBuffer[inputBufferHead++] = Serial.read();
+}
+
+// Used to send the recieved data from iPhone to the board
+void RFduinoBLE_onReceive(char *data, int len) {
+  uint8_t myByte = data[0];
+  Serial.write(myByte);
+}
+
 void RFduinoBLE_onConnect() {
   packet = 0;
   ch = 'A';
@@ -75,37 +96,23 @@ void RFduinoBLE_onConnect() {
 }
 
 void loop() {
-  if (flag)
-  {
-    // generate the next packet
-    char buf[20];
-    for (int i = 0; i < 20; i++)
-    {
-      buf[i] = ch;
-      ch++;
-      if (ch > 'Z')
-        ch = 'A';
+  boolean packetReadyToSend = false;
+  while (inputBufferHead != inputBufferTail) {
+    packetReadyToSend = true;
+    if (inputBufferTail >= NUM_BYTES_INPUT_BUFFER) {
+      inputBufferTail = 0;
     }
-
+    outputBuffer[outputBufferPosition++] = inputBuffer[inputBufferTail++];
+    if (outputBufferPosition >= NUM_BYTES_BLE_PACKET) {
+      break; // out of while loop
+    }
+  }
+  if (packetReadyToSend) {
     // send is queued (the ble stack delays send to the start of the next tx window)
-    while (! RFduinoBLE.send(buf, 20))
+    while (! RFduinoBLE.send(outputBuffer, NUM_BYTES_BLE_PACKET))
       ;  // all tx buffers in use (can't send - try again later)
 
-    if (! start)
-      start = millis();
-
-    packet++;
-    if (packet >= packets)
-    {
-      int end = millis();
-      float secs = (end - start) / 1000.0;
-      int bps = ((packets * 20) * 8) / secs;
-      Serial.println("Finished");
-      Serial.println(start);
-      Serial.println(end);
-      Serial.println(secs);
-      Serial.println(bps / 1000.0);
-      flag = false;
-    }
+    outputBufferPosition = 0;
+    packetReadyToSend = false;
   }
 }
