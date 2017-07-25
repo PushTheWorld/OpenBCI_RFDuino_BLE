@@ -7,5 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "AJ Keller",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "noble": "^1.8.1",
+    "openbci-utilities": "^0.1.2",
+    "serialport": "^4.0.7"
+  }
 }

@@ -39,6 +39,8 @@ packets were dropped.
 */
 #define NUM_BYTES_INPUT_BUFFER 50
 #define NUM_BYTES_BLE_PACKET 20
+#define TIME_TO_SEND_ONE_BYTE_US_115200 80
+#define TIME_TO_SEND_ONE_BYTE_US_57600 150
 #define TIME_TO_SEND_ONE_BYTE_US_9600 940
 #include <RFduinoBLE.h>
 
@@ -68,6 +70,9 @@ void setup() {
   // Without this line the RFDuino will fail to boot with serial baud 115200
   override_uart_limit = true;
   Serial.begin(115200);
+  timeToSendOneByte = TIME_TO_SEND_ONE_BYTE_US_115200 + 3;
+  // Serial.begin(57600);
+  // timeToSendOneByte = TIME_TO_SEND_ONE_BYTE_US_57600 + 3;
 
 
   RFduinoBLE.advertisementData = "OBCI";
@@ -81,6 +86,7 @@ void serialEvent(void){
   }
   inputBuffer[inputBufferHead++] = Serial.read();
   lastTimeSerialRead = micros();
+  // Serial.println(inputBuffer[inputBufferHead - 1]);
 }
 
 // Used to send the recieved data from iPhone to the board
@@ -102,9 +108,12 @@ void RFduinoBLE_onDisconnect() {
 }
 
 void loop() {
+
   if (connectedDevice && (micros() > (lastTimeSerialRead + timeToSendOneByte))) {
     boolean packetReadyToSend = false;
+    uint8_t bytesToSend = 0;
     while (inputBufferHead != inputBufferTail) {
+      bytesToSend++;
       packetReadyToSend = true;
       if (inputBufferTail >= NUM_BYTES_INPUT_BUFFER) {
         inputBufferTail = 0;
@@ -118,9 +127,10 @@ void loop() {
     if (packetReadyToSend) {
       // send is queued (the ble stack delays send to the start of the next tx window)
       // Serial.print("send queued: ");
-      RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET);
-      // while (! RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET))
-        // ;  // all tx buffers in use (can't send - try again later)
+      // RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET);
+      if (bytesToSend > NUM_BYTES_BLE_PACKET) bytesToSend = NUM_BYTES_BLE_PACKET;
+      while (! RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET))
+        ;  // all tx buffers in use (can't send - try again later)
       // Serial.println("packet was sent");
       outputBufferPosition = 0;
       packetReadyToSend = false;
