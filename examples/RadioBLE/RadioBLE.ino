@@ -53,7 +53,13 @@ int packet;
 int start;
 
 void setup() {
+  // Serial.begin(9600);
+
+  // Without this line the RFDuino will fail to boot with serial baud 115200
+  override_uart_limit = true;
   Serial.begin(115200);
+
+
   RFduinoBLE.advertisementData = "OBCI";
   Serial.println("Waiting for connection...");
   RFduinoBLE.begin();
