@@ -39,26 +39,28 @@ packets were dropped.
 */
 #define NUM_BYTES_INPUT_BUFFER 50
 #define NUM_BYTES_BLE_PACKET 20
+#define TIME_TO_SEND_ONE_BYTE_US_9600 940
 #include <RFduinoBLE.h>
 
-// send 500 20 byte buffers = 10000 bytes
-int packets = 500;
-
-// flag used to start sending
-int flag = false;
-
 // variables used in packet generation
-int ch;
-int packet;
-volatile boolean newChar = false;
-uint8_t inputBuffer[NUM_BYTES_INPUT_BUFFER];
-volatile uint8_t inputBufferHead = 0;
-volatile uint8_t inputBufferTail = 0;
+int start;
 
+uint8_t inputBuffer[NUM_BYTES_INPUT_BUFFER];
 uint8_t outputBuffer[NUM_BYTES_BLE_PACKET];
 uint8_t outputBufferPosition = 0;
 
-int start;
+unsigned long timeOfLastHeadShift_uS = micros();
+// Realistically need to send 20 bytes every 12ms or 12000us
+unsigned long interPacketInterval_uS = 12000;
+unsigned long lastTimeSerialRead = 0;
+unsigned long timeToSendOneByte = TIME_TO_SEND_ONE_BYTE_US_9600 + 100;
+
+volatile boolean connectedDevice = false;
+volatile boolean newChar = false;
+
+volatile uint8_t inputBufferHead = 0;
+volatile uint8_t inputBufferTail = 0;
+
 
 void setup() {
   // Serial.begin(9600);
@@ -78,6 +80,7 @@ void serialEvent(void){
     inputBufferHead = 0;
   }
   inputBuffer[inputBufferHead++] = Serial.read();
+  lastTimeSerialRead = micros();
 }
 
 // Used to send the recieved data from iPhone to the board
@@ -87,32 +90,47 @@ void RFduinoBLE_onReceive(char *data, int len) {
 }
 
 void RFduinoBLE_onConnect() {
-  packet = 0;
-  ch = 'A';
-  start = 0;
-  flag = true;
-  Serial.println("Sending");
+  connectedDevice = true;
+  Serial.println("Connected");
+  // first send is not possible until the iPhone completes service/characteristic discovery
+}
+
+void RFduinoBLE_onDisconnect() {
+  connectedDevice = false;
+  Serial.println("Disconnected");
   // first send is not possible until the iPhone completes service/characteristic discovery
 }
 
 void loop() {
-  boolean packetReadyToSend = false;
-  while (inputBufferHead != inputBufferTail) {
-    packetReadyToSend = true;
-    if (inputBufferTail >= NUM_BYTES_INPUT_BUFFER) {
-      inputBufferTail = 0;
+  if (connectedDevice && (micros() > (lastTimeSerialRead + timeToSendOneByte))) {
+    boolean packetReadyToSend = false;
+    while (inputBufferHead != inputBufferTail) {
+      packetReadyToSend = true;
+      if (inputBufferTail >= NUM_BYTES_INPUT_BUFFER) {
+        inputBufferTail = 0;
+      }
+      outputBuffer[outputBufferPosition++] = inputBuffer[inputBufferTail++];
+      if (outputBufferPosition >= NUM_BYTES_BLE_PACKET) {
+        // Serial.println("outputBufferPosition break");
+        break; // out of while loop
+      }
     }
-    outputBuffer[outputBufferPosition++] = inputBuffer[inputBufferTail++];
-    if (outputBufferPosition >= NUM_BYTES_BLE_PACKET) {
-      break; // out of while loop
+    if (packetReadyToSend) {
+      // send is queued (the ble stack delays send to the start of the next tx window)
+      // Serial.print("send queued: ");
+      RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET);
+      // while (! RFduinoBLE.send((const char *)outputBuffer, NUM_BYTES_BLE_PACKET))
+        // ;  // all tx buffers in use (can't send - try again later)
+      // Serial.println("packet was sent");
+      outputBufferPosition = 0;
+      packetReadyToSend = false;
     }
   }
-  if (packetReadyToSend) {
-    // send is queued (the ble stack delays send to the start of the next tx window)
-    while (! RFduinoBLE.send(outputBuffer, NUM_BYTES_BLE_PACKET))
-      ;  // all tx buffers in use (can't send - try again later)
-
-    outputBufferPosition = 0;
-    packetReadyToSend = false;
-  }
+  // if (micros() > timeOfLastHeadShift_uS + interPacketInterval_uS) {
+  //   timeOfLastHeadShift_uS = micros();
+  //   inputBufferHead += 19;
+  //   if (inputBufferHead >= NUM_BYTES_INPUT_BUFFER) {
+  //     inputBufferHead -= NUM_BYTES_INPUT_BUFFER;
+  //   }
+  // }
 }
