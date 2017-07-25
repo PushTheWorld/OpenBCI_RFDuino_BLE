@@ -13,7 +13,7 @@ let count = 0;
 let portOpen = false;
 setInterval(() => {
   if (portOpen) {
-    port.write(`${count}`, function(err) {
+    port.write(`pushtheworldajkeller`, function(err) {
       if (err) {
         return console.log('Error on write: ', err.message);
       }
