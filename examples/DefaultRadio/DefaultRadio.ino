@@ -31,7 +31,7 @@ void setup() {
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
   // MAKE SURE THIS CHANNEL NUMBER MATCHES THE HOST!
-  radioBLE.begin();
+  radioBLE.beginDebug(123456);
 }
 
 void loop() {
