@@ -13,12 +13,16 @@
 */
 #define DEBUG 1
 #include <RFduinoBLE.h>
-#include "OpenBCI_Radios.h"
-
+#include "OpenBCI_RFDuino_BLE.h"
+uint8_t buffer[BYTES_PER_BLE_PACKET];
+uint8_t bufferPos = 0;
 void serialEvent(void){
   // Get one char and process it
   // Mark the last serial as now;
-  radioBLE.bufferStreamAddChar(blePackets + head, Serial.read());
+  // Store it to serial buffer
+  char newChar = Serial.read();
+  radioBLE.bufferSerialAddChar(newChar);
+  radioBLE.bufferStreamAddChar(radioBLE.blePackets + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
 
@@ -35,38 +39,24 @@ void loop() {
   // First we must ask if an emergency stop flag has been triggered, as a Device
   //  we must frequently ask this question as we are the only one that can
   //  initiaite a communication between back to the Driver.
-  if (radio.bufferSerial.overflowed) {
+  if (radioBLE.bufferSerial.overflowed) {
     // Clear the buffer holding all serial data.
-    radio.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
 
     // Reset the stream buffer
-    radio.bufferStreamReset();
+    radioBLE.blePacketReset();
 
     // Send reset message to the board
-    radio.resetPic32();
-
-    // Reset the last time we contacted the host to now
-    radio.pollRefresh();
+    radioBLE.resetPic32();
 
     // Send emergency message to the host
-    radio.singleCharMsg[0] = (char)ORPM_DEVICE_SERIAL_OVERFLOW;
+    // radioBLE.singleCharMsg[0] = (char)ORPM_DEVICE_SERIAL_OVERFLOW;
 
-    if (RFduinoGZLL.sendToHost(radio.singleCharMsg,1)) {
-      radio.bufferSerial.overflowed = false;
-    }
+    radioBLE.bufferSerial.overflowed = false;
+    // if (RFduinoGZLL.sendToHost(radio.singleCharMsg,1)) {
+    //   radio.bufferSerial.overflowed = false;
+    // }
   } else {
-    if (Serial.available()) { // Is there new serial data available?
-      char newChar = Serial.read();
-      // Mark the last serial as now;
-      radio.lastTimeSerialRead = micros();
-      // Store it to serial buffer
-      radio.bufferSerialAddChar(newChar);
-      // Get one char and process it
-      radio.bufferStreamAddChar((radio.streamPacketBuffer + radio.streamPacketBufferHead), newChar);
-      // Reset the poll timer to prevent contacting the host mid read
-      radio.pollRefresh();
-    }
-
     if ((radioBLE.blePackets + radioBLE.head)->state == radioBLE.BLE_PACKET_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
       // Load the packet into the BLESendPacketBuffer
       if (radioBLE.bufferStreamTimeout()) {
@@ -90,24 +80,23 @@ void loop() {
       }
     }
 
-    if (radio.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to Host
+    if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to Host
       // Has 3ms passed since the last time the serial port was read. Only the
       //  first packet get's sent from here
-      if (radio.bufferSerialTimeout() && radio.bufferSerial.numberOfPacketsSent == 0 ) {
+      if (radioBLE.bufferSerialTimeout() && radioBLE.bufferSerial.numberOfPacketsSent == 0 ) {
         // In order to do checksumming we must only send one packet at a time
         //  this stands as the first time we are going to send a packet!
-        radio.sendPacketToHost();
+        radioBLE.sendPacketToConnectedDevice();
       }
     }
+  }
 
-    radio.bufferRadioFlushBuffers();
-
-    if (millis() > (radio.timeOfLastPoll + radio.pollTime)) {  // Has more than the poll time passed?
-      // Refresh the poll timer
-      radio.pollRefresh();
-      // Poll the host
-      radio.sendPollMessageToHost();
+  if (bufferPos > 0) {
+    uint8_t tempBytesToSend = bufferPos;
+    for (int i = 0; i < tempBytesToSend; i++) {
+      Serial.write(buffer[i]);
     }
+    bufferPos = 0;
   }
 }
 
@@ -145,7 +134,10 @@ void RFduinoBLE_onDisconnect() {
 * @param len {int} - The length of the `data` packet
 */
 void RFduinoBLE_onReceive(char *data, int len) {
-  for (uint8_t i = 0; i < len; i++) {
-    Serial.write((uint8_t)data[i]);
+  for (int i = 0; i < len; i++) {
+    if (bufferPos >= BYTES_PER_BLE_PACKET) {
+      return;
+    }
+    buffer[bufferPos++] = data[i];
   }
 }

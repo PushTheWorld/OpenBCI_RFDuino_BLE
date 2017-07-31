@@ -53,7 +53,7 @@ public:
 
     // STRUCTS
     typedef struct {
-        char      data[OPENBCI_MAX_PACKET_SIZE_BYTES];
+        char      data[BYTES_PER_BLE_PACKET];
         uint8_t   positionRead;
         uint8_t   positionWrite;
     } PacketBuffer;
@@ -90,9 +90,7 @@ public:
     } BufferRadio;
 
     typedef struct {
-      uint8_t startByte;
-      uint8_t data[BYTES_PER_SAMPLE * 3];
-      uint8_t stopByte;
+      uint8_t data[BYTES_PER_BLE_PACKET];
       uint8_t bytesIn;
       BLE_PACKET_STATE state;
     } BLEPacket;
@@ -209,6 +207,8 @@ public:
     StreamPacketBuffer spBuffer;
     volatile uint8_t head;
     volatile uint8_t tail;
+    Buffer bufferSerial;
+    PacketBuffer *currentPacketBufferSerial;
 
     // BOOLEANS
     boolean debugMode;
