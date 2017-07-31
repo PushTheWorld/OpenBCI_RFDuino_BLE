@@ -27,10 +27,9 @@ void serialEvent(void){
 }
 
 void setup() {
-  // Declare the radio mode and channel number. Note this channel is only
+  // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  // MAKE SURE THIS CHANNEL NUMBER MATCHES THE HOST!
   radioBLE.beginDebug(123456);
 }
 

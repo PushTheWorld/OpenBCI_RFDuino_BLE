@@ -69,8 +69,8 @@ void testBufferStreamAddChar_STREAM_STATE_INIT() {
     test.assertEqualHex(radioBLE.blePackets->state, radioBLE.STREAM_STATE_INIT, "should stay in init state", __LINE__);
     test.assertNotEqual(radioBLE.spBuffer.data[0], newChar, "should not have stored the new char", __LINE__);
     test.assertNotEqual(radioBLE.blePackets->data[0], newChar, "should not have stored the new char", __LINE__);
-    test.assertEqual(radioBLE.spBuffer.bytesIn, 0, "should not have read any bytes in", __LINE__);
-    test.assertEqual(radioBLE.blePackets->bytesIn, 0, "should not have read any bytes in", __LINE__);
+    test.assertEqual(radioBLE.spBuffer.bytesIn, (uint8_t)0, "should not have read any bytes in", __LINE__);
+    test.assertEqual(radioBLE.blePackets->bytesIn, (uint8_t)0, "should not have read any bytes in", __LINE__);
 }
 
 void testBufferStreamAddChar_STREAM_STATE_TAIL() {
