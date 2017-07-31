@@ -62,19 +62,19 @@ void loop() {
       if (radioBLE.bufferStreamTimeout()) {
         // We are sure this is a streaming packet.
         radioBLE.head++;
-        if (radioBLE.head > (NUM_INPUT_BUFFERS - 1)) {
+        if (radioBLE.head > (NUM_BLE_PACKETS - 1)) {
           radioBLE.head = 0;
         }
       }
     }
 
-    if ((radioBLE.blePackets + radioBLE.tail)->state == radio.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
+    if ((radioBLE.blePackets + radioBLE.tail)->state == radioBLE.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
       if (radioBLE.head != radioBLE.tail) {
         while (! RFduinoBLE.send((const char *)(radioBLE.blePackets + radioBLE.tail)->data, BYTES_PER_BLE_PACKET))
           ;  // all tx buffers in use (can't send - try again later)
         // Try to add the tail to the TX buffer
         radioBLE.tail++;
-        if (radioBLE.tail > (NUM_INPUT_BUFFERS - 1)) {
+        if (radioBLE.tail > (NUM_BLE_PACKETS - 1)) {
           radioBLE.tail = 0;
         }
       }
@@ -105,7 +105,7 @@ void loop() {
  * @type {Boolean}
  */
 void RFduinoBLE_onConnect() {
-  connectedDevice = true;
+  radioBLE.connectedDevice = true;
 #ifdef DEBUG
   Serial.println("Connected");
 #endif
@@ -117,7 +117,7 @@ void RFduinoBLE_onConnect() {
  * @type {Boolean}
  */
 void RFduinoBLE_onDisconnect() {
-  connectedDevice = false;
+  radioBLE.connectedDevice = false;
 #ifdef DEBUG
   Serial.println("Disconnected");
 #endif

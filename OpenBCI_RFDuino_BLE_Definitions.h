@@ -30,6 +30,7 @@
 #define POSITION_ACCEL_BYTE 19
 #define BYTES_PER_ACCEL 6
 #define NUM_BLE_PACKETS 50
+#define BYTES_PER_BLE_PACKET 20
 
 // Stream byte stuff
 #define OPENBCI_STREAM_BYTE_START 0xA0

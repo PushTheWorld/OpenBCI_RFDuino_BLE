@@ -39,26 +39,26 @@ void OpenBCI_RFDuino_BLE_Class::begin() {
 /**
 * @description The function that the radio will call in setup()
 * @param: mode {unint8_t} - The mode the radio shall operate in
-* @param: secreteKey {uint32_t} - The secreteKey the RFduinoBLE will
+* @param: _secreteKey {uint32_t} - The secreteKey the RFduinoBLE will
 *           use to communicate with the driver.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_RFDuino_BLE_Class::begin(uint32_t secreteKey) {
+void OpenBCI_RFDuino_BLE_Class::begin(uint32_t _secreteKey) {
   // configure radio
-  configure(secreteKey);
+  configure(_secreteKey);
 }
 
 /**
 * @description Puts into debug mode and then call other function
 * @param: mode {unint8_t} - The mode the radio shall operate in
-* @param: channelNumber {int8_t} - The channelNumber the RFduinoGZLL will
+* @param: _secreteKey {int8_t} - The _secreteKey the RFduinoGZLL will
 *           use to communicate with the other RFduinoGZLL.
 *           NOTE: Must be from 0 - 25
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_RFDuino_BLE_Class::beginDebug(uint32_t secreteKey) {
+void OpenBCI_RFDuino_BLE_Class::beginDebug(uint32_t _secreteKey) {
   debugMode = true;
-  begin(secreteKey);
+  begin(_secreteKey);
 }
 
 
@@ -70,7 +70,7 @@ void OpenBCI_RFDuino_BLE_Class::beginDebug(uint32_t secreteKey) {
 *           use to communicate with the other RFduinoGZLL
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_RFDuino_BLE_Class::configure(uint8_t mode, uint32_t _secreteKey) {
+void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
   // Check to see if we need to set the secreteKey number
   //  this is only the case on the first run of the program
   if (needToSetSecreteKey()) {
@@ -147,19 +147,12 @@ boolean OpenBCI_RFDuino_BLE_Class::needToSetSecreteKey(void) {
 *      when the channel number is out of bounds.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_RFDuino_BLE_Class::setSecreteKey(uint32_t secreteKey) {
+boolean OpenBCI_RFDuino_BLE_Class::setSecreteKey(uint32_t _secreteKey) {
+  // Secrete Key
   uint32_t *p = ADDRESS_OF_PAGE(RFDUINOGZLL_FLASH_MEM_ADDR);
-  boolean willSetSecreteKey = false;
-  uint32_t willSetSecreteKey = 0xFFFFFFFF;
-  // If I don't need to set the channel number then grab that channel number
-  if (!needToSetSecreteKey()) {
-    secreteKey = getSecreteKey();
-    willSetSecreteKey = true;
-  }
-
   int rc;
   if (flashNonVolatileMemory()) {
-    rc = flashWrite(p, secreteKey);
+    rc = flashWrite(p, _secreteKey);
     if (rc == 0) {
       return true;
     } else if (rc == 1) {
@@ -196,7 +189,7 @@ boolean OpenBCI_RFDuino_BLE_Class::flashNonVolatileMemory(void) {
 * @returns {boolean} - The packet number sent.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::sendPacketToConnectedDevice(void) {
+boolean OpenBCI_RFDuino_BLE_Class::sendPacketToConnectedDevice(void) {
 
   // Reset the stream buffers
   blePacketReset();
@@ -230,8 +223,30 @@ boolean OpenBCI_RFDuino_BLE_Class::isATailByte(uint8_t newChar) {
 * @description Sends a soft reset command to the Pic 32 incase of an emergency.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::resetPic32(void) {
+void OpenBCI_RFDuino_BLE_Class::resetPic32(void) {
   Serial.write('v');
+}
+
+/**
+* @description Private function to clean (clear/reset) a Buffer.
+* @author AJ Keller (@pushtheworldllc)
+*/
+void OpenBCI_RFDuino_BLE_Class::bufferCleanBuffer(Buffer *buffer, int numberOfPacketsToClean) {
+  bufferCleanPacketBuffer(buffer->packetBuffer,numberOfPacketsToClean);
+  buffer->numberOfPacketsToSend = 0;
+  buffer->numberOfPacketsSent = 0;
+  buffer->overflowed = false;
+}
+
+/**
+* @description Private function to clean a PacketBuffer.
+* @author AJ Keller (@pushtheworldllc)
+*/
+void OpenBCI_RFDuino_BLE_Class::bufferCleanPacketBuffer(PacketBuffer *packetBuffer, int numberOfPackets) {
+  for(int i = 0; i < numberOfPackets; i++) {
+    packetBuffer[i].positionRead = 0;
+    packetBuffer[i].positionWrite = 1;
+  }
 }
 
 /********************************************/
@@ -277,7 +292,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferCleanChar(char *buffer, int bufferLength) 
 *      buffer was overflowed.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioAddData(BufferRadio *buf, char *data, int len, boolean lastPacket) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferRadioAddData(BufferRadio *buf, char *data, int len, boolean lastPacket) {
   if (lastPacket) {
     buf->gotAllPackets = true;
   }
@@ -300,7 +315,7 @@ boolean OpenBCI_Radios_Class::bufferRadioAddData(BufferRadio *buf, char *data, i
 * @param `buf` {BufferRadio *} - The buffer to clean.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioClean(BufferRadio *buf) {
+void OpenBCI_RFDuino_BLE_Class::bufferRadioClean(BufferRadio *buf) {
   bufferCleanChar(buf->data,OPENBCI_BUFFER_LENGTH_MULTI);
 }
 
@@ -310,7 +325,7 @@ void OpenBCI_Radios_Class::bufferRadioClean(BufferRadio *buf) {
 * @param `buf` {BufferRadio *} - The buffer to flush.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioFlush(BufferRadio *buf) {
+void OpenBCI_RFDuino_BLE_Class::bufferRadioFlush(BufferRadio *buf) {
   // Lock this buffer down!
   buf->flushing = true;
   if (debugMode) {
@@ -331,7 +346,7 @@ void OpenBCI_Radios_Class::bufferRadioFlush(BufferRadio *buf) {
 *  the serial port.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioFlushBuffers(void) {
+void OpenBCI_RFDuino_BLE_Class::bufferRadioFlushBuffers(void) {
   for (int i = 0; i < OPENBCI_NUMBER_RADIO_BUFFERS; i++) {
     bufferRadioProcessSingle(bufferRadio + i);
   }
@@ -344,11 +359,11 @@ void OpenBCI_Radios_Class::bufferRadioFlushBuffers(void) {
 * @returns {boolean} - `true` if the radio buffer has data, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioHasData(BufferRadio *buf) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferRadioHasData(BufferRadio *buf) {
   return buf->positionWrite > 0;
 }
 
-byte OpenBCI_Radios_Class::bufferRadioProcessPacket(char *data, int len) {
+byte OpenBCI_RFDuino_BLE_Class::bufferRadioProcessPacket(char *data, int len) {
   // The packetNumber is embedded in the first byte, the byteId
   int packetNumber = byteIdGetPacketNumber(data[0]);
   // Last packet
@@ -457,7 +472,7 @@ byte OpenBCI_Radios_Class::bufferRadioProcessPacket(char *data, int len) {
 *  make sure we don't flush a buffer unless it's really ready!
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioProcessSingle(BufferRadio *buf) {
+void OpenBCI_RFDuino_BLE_Class::bufferRadioProcessSingle(BufferRadio *buf) {
   if (bufferRadioHasData(buf) && buf->gotAllPackets) {
     // Flush radio buffer to the driver
     bufferRadioFlush(buf);
@@ -472,7 +487,7 @@ void OpenBCI_Radios_Class::bufferRadioProcessSingle(BufferRadio *buf) {
 * @returns {boolen} - `true` if there is no lock on `buf`
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
   return !buf->flushing && !bufferRadioHasData(buf);
 }
 
@@ -481,7 +496,7 @@ boolean OpenBCI_Radios_Class::bufferRadioReadyForNewPage(BufferRadio *buf) {
 * @param `buf` {BufferRadio *} - The buffer to reset.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferRadioReset(BufferRadio *buf) {
+void OpenBCI_RFDuino_BLE_Class::bufferRadioReset(BufferRadio *buf) {
   buf->flushing = false;
   buf->gotAllPackets = false;
   buf->positionWrite = 0;
@@ -494,7 +509,7 @@ void OpenBCI_Radios_Class::bufferRadioReset(BufferRadio *buf) {
 *  `false` if the swap was not able to occur.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferRadioSwitchToOtherBuffer(void) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferRadioSwitchToOtherBuffer(void) {
   if (OPENBCI_NUMBER_RADIO_BUFFERS == 2) {
     // current radio buffer is set to the first one
     if (currentRadioBuffer == bufferRadio) {
@@ -521,7 +536,7 @@ boolean OpenBCI_Radios_Class::bufferRadioSwitchToOtherBuffer(void) {
 *  `false` on serial buffer overflow.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialAddChar(char newChar) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferSerialAddChar(char newChar) {
   // Is the serial buffer overflowed?
   if (bufferSerial.overflowed) {
     // End the subroutine
@@ -574,7 +589,7 @@ boolean OpenBCI_Radios_Class::bufferSerialAddChar(char newChar) {
 *  serial buffer, `false` if not...
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialHasData(void) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferSerialHasData(void) {
   return bufferSerial.numberOfPacketsSent < bufferSerial.numberOfPacketsToSend;
 }
 
@@ -586,7 +601,7 @@ boolean OpenBCI_Radios_Class::bufferSerialHasData(void) {
 *      packets actually used.
 * @author AJ Keller (@pushtheworldllc)
 */
-void OpenBCI_Radios_Class::bufferSerialReset(uint8_t n) {
+void OpenBCI_RFDuino_BLE_Class::bufferSerialReset(uint8_t n) {
   bufferCleanBuffer(&bufferSerial, n);
   currentPacketBufferSerial = bufferSerial.packetBuffer;
   // previousPacketNumber = 0;
@@ -598,7 +613,7 @@ void OpenBCI_Radios_Class::bufferSerialReset(uint8_t n) {
 * @returns {boolean} - `true` if enough time has passed, `false` if not.
 * @author AJ Keller (@pushtheworldllc)
 */
-boolean OpenBCI_Radios_Class::bufferSerialTimeout(void) {
+boolean OpenBCI_RFDuino_BLE_Class::bufferSerialTimeout(void) {
   return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_NRML_uS);
 }
 
@@ -611,26 +626,26 @@ boolean OpenBCI_Radios_Class::bufferSerialTimeout(void) {
 */
 void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char newChar) {
   // Process the new char
-  switch (spBuffer->state) {
+  switch (spBuffer.state) {
     case STREAM_STATE_TAIL:
       // Is the current char equal to 0xCX where X is 0-F?
       if (isATailByte(newChar)) {
         // Set the type byte
-        spBuffer->typeByte = newChar;
+        spBuffer.typeByte = newChar;
         // Change the state to ready
-        spBuffer->state = STREAM_STATE_READY;
+        spBuffer.state = STREAM_STATE_READY;
         if (blePacket->state == BLE_PACKET_STATE_GOT_ALL_PACKETS) {
           blePacket->state = BLE_PACKET_STATE_READY;
-          blePacket->data[POSITION_ACCEL_BYTE] = spBuffer->data[1];
+          blePacket->data[POSITION_ACCEL_BYTE] = spBuffer.data[1];
         }
         // Serial.print(33); Serial.print(" state: "); Serial.print("READY-");
         // Serial.println((streamPacketBuffer + streamPacketBufferHead)->state);
       } else {
         // Reset the state machine
-        spBuffer->state = STREAM_STATE_INIT;
+        spBuffer.state = STREAM_STATE_INIT;
         blePacket->state = BLE_PACKET_STATE_INIT;
         // Set bytes in to 0
-        spBuffer->bytesIn = 0;
+        spBuffer.bytesIn = 0;
         blePacket->bytesIn = 0;
 
         // Test to see if this byte is a head byte, maybe if it's not a
@@ -638,31 +653,31 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         //  over from the Pic.
         if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
           // Move the state
-          spBuffer->state = STREAM_STATE_STORING;
+          spBuffer.state = STREAM_STATE_STORING;
           // Store to the buffer
-          spBuffer->data[0] = newChar;
+          spBuffer.data[0] = newChar;
           blePacket->data[0] = newChar;
           // Set to 1
-          spBuffer->bytesIn = 1;
+          spBuffer.bytesIn = 1;
           // Only set blePacket bytesIn if there are no bytes in
           if (blePacket->bytesIn == 0) blePacket->bytesIn = 1;
         }
       }
       break;
     case STREAM_STATE_STORING:
-      if (spBuffer->bytesIn > 1 && spBuffer->bytesIn < 9) {
+      if (spBuffer.bytesIn > 1 && spBuffer.bytesIn < 9) {
         blePacket->data[blePacket->bytesIn++] = newChar;
         if (blePacket->bytesIn >= POSITION_ACCEL_BYTE) {
           blePacket->state = BLE_PACKET_STATE_GOT_ALL_PACKETS;
         }
       }
       // Store to the stream packet buffer
-      spBuffer->data[spBuffer->bytesIn] = newChar;
+      spBuffer.data[spBuffer.bytesIn] = newChar;
       // Increment the number of bytes read in
-      spBuffer->bytesIn++;
+      spBuffer.bytesIn++;
 
-      if (spBuffer->bytesIn == OPENBCI_MAX_PACKET_SIZE_BYTES) {
-        spBuffer->state = STREAM_STATE_TAIL;
+      if (spBuffer.bytesIn == OPENBCI_MAX_PACKET_SIZE_BYTES) {
+        spBuffer.state = STREAM_STATE_TAIL;
       }
 
       break;
@@ -671,50 +686,31 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     //  bigger message
     case STREAM_STATE_READY:
       // Got a 34th byte, go back to start
-      spBuffer->state = STREAM_STATE_INIT;
+      spBuffer.state = STREAM_STATE_INIT;
       blePacket->state = BLE_PACKET_STATE_INIT;
       // Set bytes in to 0
-      spBuffer->bytesIn = 0;
+      spBuffer.bytesIn = 0;
       blePacket->bytesIn = 0;
 
       break;
     case STREAM_STATE_INIT:
       if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
         // Move the state
-        spBuffer->state = STREAM_STATE_STORING;
+        spBuffer.state = STREAM_STATE_STORING;
         // Store to the streamPacketBuffer
-        spBuffer->data[0] = newChar;
+        spBuffer.data[0] = newChar;
         blePacket->data[0] = newChar;
         // Set to 1
-        spBuffer->bytesIn = 1;
+        spBuffer.bytesIn = 1;
         // Only set blePacket bytesIn if there are no bytes in
         if (blePacket->bytesIn == 0) blePacket->bytesIn = 1;
       }
       break;
     default:
       // // Reset the state
-      spBuffer->state = STREAM_STATE_INIT;
+      spBuffer.state = STREAM_STATE_INIT;
       break;
 
-  }
-}
-
-
-/**
-* @description Used to flush a StreamPacketBuffer if the `streamPacketBufferTail`
-*  is not equal to the `streamPacketBufferHead`. This function will also reset
-*  the buffer after the buffer is flushed. Further it will increment `streamPacketBufferTail`
-*  and wrap that around if necessary.
-* @author AJ Keller (@pushtheworldllc)
-**/
-void OpenBCI_RFDuino_BLE_Class::bufferStreamFlushBuffers(void) {
-  if (streamPacketBufferTail != streamPacketBufferHead) {
-    bufferStreamFlush(streamPacketBuffer + streamPacketBufferTail);
-    bufferStreamReset(streamPacketBuffer + streamPacketBufferTail);
-    streamPacketBufferTail++;
-    if (streamPacketBufferTail > (OPENBCI_NUMBER_STREAM_BUFFERS - 1)) {
-      streamPacketBufferTail = 0;
-    }
   }
 }
 
@@ -730,27 +726,15 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferStreamReadyForNewPacket(StreamPacketBuf
 }
 
 /**
-* @description Utility function to return `true` if the the streamPacketBuffer
-*   is in the STREAM_STATE_READY. Normally used for determining if a stream
-*   packet is ready to be sent.
-* @param `buf` {StreamPacketBuffer *} - The stream packet buffer to send to the Host.
-* @returns {boolean} - `true` is the `buf` is in the ready state, `false` otherwise.
-* @author AJ Keller (@pushtheworldllc)
-*/
-boolean OpenBCI_RFDuino_BLE_Class::bufferStreamReadyToSendToHost(StreamPacketBuffer *buf) {
-  return radio.streamPacketBuffer->state == radio.STREAM_STATE_READY;
-}
-
-/**
 * @description Resets the stream packet buffer to default settings
 * @author AJ Keller (@pushtheworldllc)
 */
 void OpenBCI_RFDuino_BLE_Class::blePacketReset(void) {
-  for (int i = 0; i < NUM_INPUT_BUFFERS; i++) {
-    packetBLEReset(streamPacketBuffer + i);
+  for (int i = 0; i < NUM_BLE_PACKETS; i++) {
+    blePacketReset(blePackets + i);
   }
-  streamPacketBufferHead = 0;
-  streamPacketBufferTail = 0;
+  head = 0;
+  tail = 0;
 }
 
 /**

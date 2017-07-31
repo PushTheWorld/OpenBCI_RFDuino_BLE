@@ -18,13 +18,13 @@
 #define __OpenBCI_Radios__
 
 #include <Arduino.h>
-#include <RFduinoGZLL.h>
+#include <RFduinoBLE.h>
 
 // needed for enum and callback support
 // #include "libRFduinoGZLL.h"
-#include "OpenBCI_Radios_Definitions.h"
+#include "OpenBCI_RFDuino_BLE_Definitions.h"
 
-class OpenBCI_Radios_Class {
+class OpenBCI_RFDuino_BLE_Class {
 
 public:
     // ENUMS
@@ -74,14 +74,6 @@ public:
     } StreamPacketBuffer;
 
     typedef struct {
-        uint8_t         typeByte;
-        char            data[RFDUINO_BLE_MAX_PACKET_SIZE_BYTES];
-        uint8_t         bytesIn;
-        boolean         flushing;
-        STORE_STATE     state;
-    } BLESendPacketBuffer;
-
-    typedef struct {
         boolean flushing;
         boolean gotAllPackets;
         char    data[OPENBCI_BUFFER_LENGTH_MULTI];
@@ -96,10 +88,11 @@ public:
     } BLEPacket;
 
 // SHARED
-    OpenBCI_Radios_Class();
-    void        begin(uint8_t);
-    void        begin(uint8_t, uint32_t);
-    void        beginDebug(uint8_t, uint32_t);
+    OpenBCI_RFDuino_BLE_Class();
+    void        begin();
+    void        begin(uint32_t);
+    void        beginDebug(uint32_t);
+    void        blePacketReset();
     void        blePacketReset(BLEPacket *);
     void        bufferAddTimeSyncSentAck(void);
     void        bufferCleanChar(char *, int);
@@ -119,21 +112,18 @@ public:
     void        bufferRadioReset(BufferRadio *);
     boolean     bufferRadioSwitchToOtherBuffer(void);
     void        bufferResetStreamPacketBuffer(void);
-    void        bufferResetBLESendPacketBuffer(void);
     boolean     bufferSerialAddChar(char);
     boolean     bufferSerialHasData(void);
     void        bufferSerialProcessCommsFailure(void);
     void        bufferSerialReset(uint8_t);
     boolean     bufferSerialTimeout(void);
-    void        bufferStreamAddChar(StreamPacketBuffer *, char);
-    void        bufferStreamAddChar(BLESendPacketBuffer *, char);
+    void        bufferStreamAddChar(BLEPacket *, char);
     boolean     bufferStreamAddData(char *);
     void        bufferStreamFlushBuffers(void);
     boolean     bufferStreamReadyForNewPacket(StreamPacketBuffer *);
     boolean     bufferStreamReadyToSendToHost(StreamPacketBuffer *buf);
     void        bufferStreamReset(void);
     void        bufferStreamReset(StreamPacketBuffer *);
-    void        bufferBLESendReset(BLESendPacketBuffer *);
     boolean     bufferStreamSendToHost(StreamPacketBuffer *buf);
     void        bufferStreamStoreData(StreamPacketBuffer *, char *);
     boolean     bufferStreamTimeout(void);
@@ -143,21 +133,19 @@ public:
     char        byteIdMake(boolean, uint8_t, char *, uint8_t);
     byte        byteIdMakeStreamPacketType(uint8_t);
     boolean     commsFailureTimeout(void);
-    void        configure(uint8_t,uint32_t);
+    void        configure(uint32_t);
     void        configureDevice(void);
-    void        configureHost(void);
-    void        configurePassThru(void);
     boolean     didPCSendDataToHost(void);
     boolean     didPicSendDeviceSerialData(void);
     boolean     flashNonVolatileMemory(void);
-    uint32_t    getChannelNumber(void);
+    uint32_t    getSecreteKey(void);
     uint32_t    getPollTime(void);
     boolean     hasStreamPacket(void);
     boolean     hostPacketToSend(void);
     boolean     isATailByte(uint8_t);
     void        ledFeedBackForPassThru(void);
     // void        moveStreamPacketToTempBuffer(volatile char *data);
-    boolean     needToSetChannelNumber(void);
+    boolean     needToSetSecreteKey(void);
     boolean     needToSetPollTime(void);
     byte        outputGetStopByteFromByteId(char);
     void        pollHost(void);
@@ -167,8 +155,8 @@ public:
     void        pollRefresh(void);
     void        pushRadioBuffer(void);
     void        printBaudRateChangeTo(int);
-    void        printChannelNumber(char);
-    void        printChannelNumberVerify(void);
+    void        printSecreteKey(char);
+    void        printSecreteKeyVerify(void);
     void        printCommsTimeout(void);
     void        printEOT(void);
     void        printFailure(void);
@@ -178,24 +166,21 @@ public:
     void        printValidatedCommsTimeout(void);
     void        processCommsFailureSinglePacket(void);
     boolean     processDeviceRadioCharData(char *, int);
-    boolean     processHostRadioCharData(device_t, char *, int);
     byte        processOutboundBuffer(PacketBuffer *);
     byte        processOutboundBufferCharDouble(char *);
     byte        processOutboundBufferCharTriple(char *);
     boolean     processOutboundBufferForTimeSync(void);
     boolean     processRadioCharDevice(char);
-    boolean     processRadioCharHost(device_t, char);
     void        resetPic32(void);
     boolean     revertToDefaultPollTime(void);
-    void        revertToPreviousChannelNumber(void);
-    void        sendPacketToDevice(volatile device_t, boolean);
-    boolean     sendPacketToHost(void);
+    void        revertToPreviousSecreteKey(void);
+    boolean     sendPacketToConnectedDevice(void);
     void        sendPollMessageToHost(void);
     void        sendRadioMessageToHost(byte);
     void        sendStreamPackets(void);
     boolean     serialWriteTimeOut(void);
     void        setByteIdForPacketBuffer(int);
-    boolean     setChannelNumber(uint32_t);
+    boolean     setSecreteKey(uint32_t);
     boolean     setPollTime(uint32_t);
     void        writeBufferToSerial(char *,int);
 
@@ -205,8 +190,12 @@ public:
     // CUSTOMS
     BLEPacket blePackets[NUM_BLE_PACKETS];
     StreamPacketBuffer spBuffer;
+    BufferRadio bufferRadio[OPENBCI_NUMBER_RADIO_BUFFERS];
+    uint8_t currentRadioBufferNum;
+    BufferRadio *currentRadioBuffer;
     volatile uint8_t head;
     volatile uint8_t tail;
+    volatile boolean connectedDevice;
     Buffer bufferSerial;
     PacketBuffer *currentPacketBufferSerial;
 
@@ -219,7 +208,7 @@ public:
     volatile boolean sendingMultiPacket;
     volatile unsigned long timeOfLastPoll;
 
-    volatile boolean isWaitingForNewChannelNumberConfirmation;
+    volatile boolean isWaitingForNewSecreteKeyConfirmation;
     volatile boolean isWaitingForNewPollTimeConfirmation;
     volatile boolean sendSerialAck;
     volatile boolean printMessageToDriverFlag;
@@ -235,13 +224,10 @@ public:
     unsigned long lastTimeHostHeardFromDevice;
     volatile unsigned long lastTimeSerialRead;
 
-
-    uint32_t radioChannel;
-    uint32_t previousRadioChannel;
-    uint32_t pollTime;
+    uint32_t secreteKey;
 };
 
 // Very important, major key to success #christmas
-extern OpenBCI_Radio_BLE_Class radioBLE;
+extern OpenBCI_RFDuino_BLE_Class radioBLE;
 
 #endif // OPENBCI_RADIO_H
