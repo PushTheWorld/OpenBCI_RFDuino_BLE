@@ -10,8 +10,8 @@
 *     is inspired directly from their work.
 */
 
-#ifndef __OpenBCI_Radio_Definitions__
-#define __OpenBCI_Radio_Definitions__
+#ifndef __OpenBCI_RFDuino_Definitions__
+#define __OpenBCI_RFDuino_Definitions__
 
 // These are helpful maximums to reference nad use in the code
 #define RFDUINO_BLE_MAX_PACKET_SIZE_BYTES 20
@@ -24,6 +24,12 @@
 #define OPENBCI_TIMEOUT_PACKET_STREAM_uS 88 // Slightly longer than it takes to send a serial byte at 115200
 #define OPENBCI_TIMEOUT_PACKET_POLL_MS 48 // Poll time out length for sending null packet from device to host
 #define OPENBCI_TIMEOUT_COMMS_MS 270 // Comms failure time out length. Used only by Host.
+
+#define BYTES_PER_SAMPLE 6
+#define BYTES_PER_CHANNEL 3
+#define POSITION_ACCEL_BYTE 19
+#define BYTES_PER_ACCEL 6
+#define NUM_BLE_PACKETS 50
 
 // Stream byte stuff
 #define OPENBCI_STREAM_BYTE_START 0xA0

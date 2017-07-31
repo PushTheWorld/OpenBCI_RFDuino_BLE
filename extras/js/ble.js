@@ -90,7 +90,7 @@ noble.on('discover', function(peripheral) {
             //
             rfduinoSubscribeCharacteristic.on('read', (data) => {
               // TODO: handle all the data, both streaming and not
-              console.log(data.toString());
+              console.log(`${data[0]} head: ${data[1]} tail: ${data[2]}`);
               // processBytes(data);
             });
             rfduinoSubscribeCharacteristic.notify(true);

@@ -11,8 +11,16 @@
 *  you downloaded from github. Free to use and share. This code presented for
 *  use as-is.
 */
+#define DEBUG 1
 #include <RFduinoBLE.h>
 #include "OpenBCI_Radios.h"
+
+void serialEvent(void){
+  // Get one char and process it
+  // Mark the last serial as now;
+  radioBLE.bufferStreamAddChar(blePackets + head, Serial.read());
+  radioBLE.lastTimeSerialRead = micros();
+}
 
 void setup() {
   // Declare the radio mode and channel number. Note this channel is only
@@ -59,25 +67,25 @@ void loop() {
       radio.pollRefresh();
     }
 
-    if ((radio.streamPacketBuffer + radio.streamPacketBufferHead)->state == radio.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
+    if ((radioBLE.blePackets + radioBLE.head)->state == radioBLE.BLE_PACKET_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
       // Load the packet into the BLESendPacketBuffer
-      if (radio.bufferStreamTimeout()) {
+      if (radioBLE.bufferStreamTimeout()) {
         // We are sure this is a streaming packet.
-        radio.streamPacketBufferHead++;
-        if (radio.streamPacketBufferHead > (OPENBCI_NUMBER_STREAM_BUFFERS - 1)) {
-          radio.streamPacketBufferHead = 0;
+        radioBLE.head++;
+        if (radioBLE.head > (NUM_INPUT_BUFFERS - 1)) {
+          radioBLE.head = 0;
         }
       }
     }
 
-    if ((radio.streamPacketBuffer + radio.streamPacketBufferTail)->state == radio.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
-      if (radio.streamPacketBufferHead != radio.streamPacketBufferTail) {
+    if ((radioBLE.blePackets + radioBLE.tail)->state == radio.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
+      if (radioBLE.head != radioBLE.tail) {
+        while (! RFduinoBLE.send((const char *)(radioBLE.blePackets + radioBLE.tail)->data, BYTES_PER_BLE_PACKET))
+          ;  // all tx buffers in use (can't send - try again later)
         // Try to add the tail to the TX buffer
-        if (radio.bufferStreamSendToHost(radio.streamPacketBuffer + radio.streamPacketBufferTail)) {
-          radio.streamPacketBufferTail++;
-          if (radio.streamPacketBufferTail > (OPENBCI_NUMBER_STREAM_BUFFERS - 1)) {
-            radio.streamPacketBufferTail = 0;
-          }
+        radioBLE.tail++;
+        if (radioBLE.tail > (NUM_INPUT_BUFFERS - 1)) {
+          radioBLE.tail = 0;
         }
       }
     }
@@ -104,26 +112,40 @@ void loop() {
 }
 
 /**
+ * Fired when a device connects
+ * @type {Boolean}
+ */
+void RFduinoBLE_onConnect() {
+  connectedDevice = true;
+#ifdef DEBUG
+  Serial.println("Connected");
+#endif
+  // first send is not possible until the iPhone completes service/characteristic discovery
+}
+
+/**
+ * Triggered when a BLE device disconnects
+ * @type {Boolean}
+ */
+void RFduinoBLE_onDisconnect() {
+  connectedDevice = false;
+#ifdef DEBUG
+  Serial.println("Disconnected");
+#endif
+  // first send is not possible until the iPhone completes service/characteristic discovery
+}
+
+/**
 * @description A packet with 1 byte is a private radio message, a packet with
 *                  more than 1 byte is a standard packet with a checksum. and
 *                  a packet with no length is a NULL packet that indicates a
 *                  successful message transmission
 * @param device {device_t} - The host in this case
-* @param rssi {int} - NOT used
 * @param data {char *} - The packet of data sent in the packet
 * @param len {int} - The length of the `data` packet
 */
-void RFduinoBLE_onReceive(int rssi, char *data, int len) {
-  // Set send data packet flag to false
-  boolean sendDataPacket = false;
-  // Is the length of the packer equal to one?
-  if (len > 1) {
-    // Enter process char data packet subroutine
-    sendDataPacket = radio.processDeviceRadioCharData(data,len);
-  }
-
-  // Is the send data packet flag set to true
-  if (sendDataPacket) {
-    radio.sendPacketToHost();
+void RFduinoBLE_onReceive(char *data, int len) {
+  for (uint8_t i = 0; i < len; i++) {
+    Serial.write((uint8_t)data[i]);
   }
 }

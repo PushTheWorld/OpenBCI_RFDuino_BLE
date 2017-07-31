@@ -1,5 +1,5 @@
 var SerialPort = require('serialport');
-var port = new SerialPort('/dev/tty.usbserial-DQ008436', {
+var port = new SerialPort('/dev/tty.usbserial-DB00JLWR', {
   baudrate: 115200,
   autoOpen: false
 });

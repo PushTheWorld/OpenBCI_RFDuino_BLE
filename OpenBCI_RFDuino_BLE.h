@@ -41,6 +41,16 @@ public:
         STORE_STATE_STORING_THRID,
         STORE_STATE_READY
     };
+
+    typedef enum BLE_PACKET_STATE {
+        BLE_PACKET_STATE_INIT,
+        BLE_PACKET_STATE_STORING_FIRST,
+        BLE_PACKET_STATE_STORING_SECOND,
+        BLE_PACKET_STATE_STORING_THRID,
+        BLE_PACKET_STATE_GOT_ALL_PACKETS,
+        BLE_PACKET_STATE_READY
+    };
+
     // STRUCTS
     typedef struct {
         char      data[OPENBCI_MAX_PACKET_SIZE_BYTES];
@@ -79,11 +89,20 @@ public:
         uint8_t previousPacketNumber;
     } BufferRadio;
 
+    typedef struct {
+      uint8_t startByte;
+      uint8_t data[BYTES_PER_SAMPLE * 3];
+      uint8_t stopByte;
+      uint8_t bytesIn;
+      BLE_PACKET_STATE state;
+    } BLEPacket;
+
 // SHARED
     OpenBCI_Radios_Class();
     void        begin(uint8_t);
     void        begin(uint8_t, uint32_t);
     void        beginDebug(uint8_t, uint32_t);
+    void        blePacketReset(BLEPacket *);
     void        bufferAddTimeSyncSentAck(void);
     void        bufferCleanChar(char *, int);
     void        bufferCleanCompleteBuffer(Buffer *, int);
@@ -186,28 +205,20 @@ public:
     // SHARED VARIABLES //
     //////////////////////
     // CUSTOMS
-    BufferRadio bufferRadio[OPENBCI_NUMBER_RADIO_BUFFERS];
-    uint8_t currentRadioBufferNum;
-    BufferRadio *currentRadioBuffer;
-    uint8_t streamPacketBufferHead;
-    uint8_t streamPacketBufferTail;
-    Buffer bufferSerial;
-    PacketBuffer *currentPacketBufferSerial;
+    BLEPacket blePackets[NUM_BLE_PACKETS];
+    StreamPacketBuffer spBuffer;
+    volatile uint8_t head;
+    volatile uint8_t tail;
+
     // BOOLEANS
     boolean debugMode;
     // CHARS
     char singleCharMsg[1];
     char singlePayLoad[1];
 
-    StreamPacketBuffer streamPacketBuffer[OPENBCI_NUMBER_STREAM_BUFFERS];
     volatile boolean sendingMultiPacket;
-    volatile boolean isWaitingForNewChannelNumber;
-    volatile boolean isWaitingForNewPollTime;
     volatile unsigned long timeOfLastPoll;
-    unsigned long timeOfLastMultipacketSendToHost;
 
-    boolean channelNumberSaveAttempted;
-    boolean streamPacketsHaveHeads;
     volatile boolean isWaitingForNewChannelNumberConfirmation;
     volatile boolean isWaitingForNewPollTimeConfirmation;
     volatile boolean sendSerialAck;
