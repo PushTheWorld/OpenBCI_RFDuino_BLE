@@ -634,8 +634,8 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         spBuffer.typeByte = newChar;
         // Change the state to ready
         spBuffer.state = STREAM_STATE_READY;
-        if (blePacket->state == BLE_PACKET_STATE_GOT_ALL_PACKETS) {
-          blePacket->state = BLE_PACKET_STATE_READY;
+        if (blePacket->state == STREAM_STATE_GOT_ALL_PACKETS) {
+          blePacket->state = STREAM_STATE_READY;
           blePacket->data[POSITION_ACCEL_BYTE] = spBuffer.data[1];
         }
         // Serial.print(33); Serial.print(" state: "); Serial.print("READY-");
@@ -643,7 +643,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       } else {
         // Reset the state machine
         spBuffer.state = STREAM_STATE_INIT;
-        blePacket->state = BLE_PACKET_STATE_INIT;
+        blePacket->state = STREAM_STATE_INIT;
         // Set bytes in to 0
         spBuffer.bytesIn = 0;
         blePacket->bytesIn = 0;
@@ -668,7 +668,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       if (spBuffer.bytesIn > 1 && spBuffer.bytesIn < 9) {
         blePacket->data[blePacket->bytesIn++] = newChar;
         if (blePacket->bytesIn >= POSITION_ACCEL_BYTE) {
-          blePacket->state = BLE_PACKET_STATE_GOT_ALL_PACKETS;
+          blePacket->state = STREAM_STATE_TAIL;
         }
       }
       // Store to the stream packet buffer
@@ -687,7 +687,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     case STREAM_STATE_READY:
       // Got a 34th byte, go back to start
       spBuffer.state = STREAM_STATE_INIT;
-      blePacket->state = BLE_PACKET_STATE_INIT;
+      blePacket->state = STREAM_STATE_INIT;
       // Set bytes in to 0
       spBuffer.bytesIn = 0;
       blePacket->bytesIn = 0;
@@ -715,14 +715,13 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
 }
 
 /**
-* @description Used to determine if a stream packet buffer is ready for a new packet
-*  this function is no longer being used with the head/tail system. Will look to
-*  deprecate it soon.
-* @param `buf` {StreamPacketBuffer *} - The stream packet buffer to add the char to.
+* @description Resets the stream packet buffer to default settings
+* @param `buf` {StreamPacketBuffer *} - Pointer to a stream packet buffer to reset
 * @author AJ Keller (@pushtheworldllc)
-**/
-boolean OpenBCI_RFDuino_BLE_Class::bufferStreamReadyForNewPacket(StreamPacketBuffer *buf) {
-  return buf->bytesIn == 0 && !buf->flushing;
+*/
+void OpenBCI_RFDuino_BLE_Class::bufferStreamReset(void) {
+  spBuffer.bytesIn = 0;
+  spBuffer.state = STREAM_STATE_INIT;
 }
 
 /**
@@ -744,25 +743,7 @@ void OpenBCI_RFDuino_BLE_Class::blePacketReset(void) {
 */
 void OpenBCI_RFDuino_BLE_Class::blePacketReset(BLEPacket *blePacket) {
   blePacket->bytesIn = 0;
-  blePacket->state = BLE_PACKET_STATE_INIT;
-}
-
-
-
-/**
-* @description Used to flush a StreamPacketBuffer to the serial port with a
-*  head byte and a formated tail byte based off the `typeByte`.
-* @param `buf` {StreamPacketBuffer *} - The stream packet buffer to add the char to.
-* @param `data` {char *} - A stream packet buffer in raw char buffer form fresh
-*   from the radio.
-* @author AJ Keller (@pushtheworldllc)
-**/
-void OpenBCI_RFDuino_BLE_Class::bufferStreamStoreData(StreamPacketBuffer *buf, char *data) {
-  buf->bytesIn = OPENBCI_MAX_DATA_BYTES_IN_PACKET;
-  buf->typeByte = outputGetStopByteFromByteId(data[0]);
-  for (int i = 0; i < OPENBCI_MAX_DATA_BYTES_IN_PACKET; i++) {
-    buf->data[i] = data[i+1];
-  }
+  blePacket->state = STREAM_STATE_INIT;
 }
 
 /**

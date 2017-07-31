@@ -35,6 +35,7 @@
 // Stream byte stuff
 #define OPENBCI_STREAM_BYTE_START 0xA0
 #define OPENBCI_STREAM_BYTE_STOP 0xC0
+#define OPENBCI_PIC32_STREAM_START 0x41
 
 // Max buffer lengths
 #define OPENBCI_BUFFER_LENGTH_MULTI 528 // 16 * 33

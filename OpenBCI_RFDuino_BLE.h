@@ -32,23 +32,8 @@ public:
         STREAM_STATE_INIT,
         STREAM_STATE_STORING,
         STREAM_STATE_TAIL,
+        STREAM_STATE_GOT_ALL_PACKETS,
         STREAM_STATE_READY
-    };
-    typedef enum STORE_STATE {
-        STORE_STATE_INIT,
-        STORE_STATE_STORING_FIRST,
-        STORE_STATE_STORING_SECOND,
-        STORE_STATE_STORING_THRID,
-        STORE_STATE_READY
-    };
-
-    typedef enum BLE_PACKET_STATE {
-        BLE_PACKET_STATE_INIT,
-        BLE_PACKET_STATE_STORING_FIRST,
-        BLE_PACKET_STATE_STORING_SECOND,
-        BLE_PACKET_STATE_STORING_THRID,
-        BLE_PACKET_STATE_GOT_ALL_PACKETS,
-        BLE_PACKET_STATE_READY
     };
 
     // STRUCTS
@@ -84,7 +69,7 @@ public:
     typedef struct {
       uint8_t data[BYTES_PER_BLE_PACKET];
       uint8_t bytesIn;
-      BLE_PACKET_STATE state;
+      STREAM_STATE state;
     } BLEPacket;
 
 // SHARED
@@ -120,12 +105,7 @@ public:
     void        bufferStreamAddChar(BLEPacket *, char);
     boolean     bufferStreamAddData(char *);
     void        bufferStreamFlushBuffers(void);
-    boolean     bufferStreamReadyForNewPacket(StreamPacketBuffer *);
-    boolean     bufferStreamReadyToSendToHost(StreamPacketBuffer *buf);
     void        bufferStreamReset(void);
-    void        bufferStreamReset(StreamPacketBuffer *);
-    boolean     bufferStreamSendToHost(StreamPacketBuffer *buf);
-    void        bufferStreamStoreData(StreamPacketBuffer *, char *);
     boolean     bufferStreamTimeout(void);
     boolean     byteIdGetIsStream(uint8_t);
     int         byteIdGetPacketNumber(uint8_t);
@@ -135,21 +115,11 @@ public:
     boolean     commsFailureTimeout(void);
     void        configure(uint32_t);
     void        configureDevice(void);
-    boolean     didPCSendDataToHost(void);
-    boolean     didPicSendDeviceSerialData(void);
     boolean     flashNonVolatileMemory(void);
     uint32_t    getSecreteKey(void);
-    uint32_t    getPollTime(void);
-    boolean     hasStreamPacket(void);
-    boolean     hostPacketToSend(void);
     boolean     isATailByte(uint8_t);
-    void        ledFeedBackForPassThru(void);
-    // void        moveStreamPacketToTempBuffer(volatile char *data);
     boolean     needToSetSecreteKey(void);
-    boolean     needToSetPollTime(void);
     byte        outputGetStopByteFromByteId(char);
-    void        pollHost(void);
-    boolean     pollNow(void);
     boolean     packetToSend(void);
     boolean     packetsInSerialBuffer(void);
     void        pollRefresh(void);
@@ -166,22 +136,14 @@ public:
     void        printValidatedCommsTimeout(void);
     void        processCommsFailureSinglePacket(void);
     boolean     processDeviceRadioCharData(char *, int);
-    byte        processOutboundBuffer(PacketBuffer *);
-    byte        processOutboundBufferCharDouble(char *);
-    byte        processOutboundBufferCharTriple(char *);
-    boolean     processOutboundBufferForTimeSync(void);
-    boolean     processRadioCharDevice(char);
     void        resetPic32(void);
-    boolean     revertToDefaultPollTime(void);
     void        revertToPreviousSecreteKey(void);
     boolean     sendPacketToConnectedDevice(void);
-    void        sendPollMessageToHost(void);
     void        sendRadioMessageToHost(byte);
     void        sendStreamPackets(void);
     boolean     serialWriteTimeOut(void);
     void        setByteIdForPacketBuffer(int);
     boolean     setSecreteKey(uint32_t);
-    boolean     setPollTime(uint32_t);
     void        writeBufferToSerial(char *,int);
 
     //////////////////////
