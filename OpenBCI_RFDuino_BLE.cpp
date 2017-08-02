@@ -636,12 +636,12 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         spBuffer.state = STREAM_STATE_READY;
         if (blePacket->state == STREAM_STATE_GOT_ALL_PACKETS) {
           blePacket->state = STREAM_STATE_READY;
-          blePacket->data[POSITION_ACCEL_BYTE] = spBuffer.data[1];
+          blePacket->data[0] = newChar;
         }
         // Serial.print(33); Serial.print(" state: "); Serial.print("READY-");
         // Serial.println((streamPacketBuffer + streamPacketBufferHead)->state);
       } else {
-        // Reset the state machine
+        // Reset the state machines
         spBuffer.state = STREAM_STATE_INIT;
         blePacket->state = STREAM_STATE_INIT;
         // Set bytes in to 0
@@ -654,21 +654,21 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
           // Move the state
           spBuffer.state = STREAM_STATE_STORING;
+          blePackets->state = STREAM_STATE_STORING;
           // Store to the buffer
           spBuffer.data[0] = newChar;
-          blePacket->data[0] = newChar;
           // Set to 1
           spBuffer.bytesIn = 1;
-          // Only set blePacket bytesIn if there are no bytes in
-          if (blePacket->bytesIn == 0) blePacket->bytesIn = 1;
+          // Set blePacket bytesIn back to zero
+          blePacket->bytesIn = 0;
         }
       }
       break;
     case STREAM_STATE_STORING:
-      if (spBuffer.bytesIn > 1 && spBuffer.bytesIn < 9) {
+      if (spBuffer.bytesIn >= 2 && spBuffer.bytesIn <= 8 || blePacket->bytesIn == 0) {
         blePacket->data[blePacket->bytesIn++] = newChar;
         if (blePacket->bytesIn >= POSITION_ACCEL_BYTE) {
-          blePacket->state = STREAM_STATE_TAIL;
+          blePacket->state = STREAM_STATE_GOT_ALL_PACKETS;
         }
       }
       // Store to the stream packet buffer
@@ -697,13 +697,11 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
         // Move the state
         spBuffer.state = STREAM_STATE_STORING;
+        blePacket->state = STREAM_STATE_STORING;
         // Store to the streamPacketBuffer
         spBuffer.data[0] = newChar;
-        blePacket->data[0] = newChar;
         // Set to 1
         spBuffer.bytesIn = 1;
-        // Only set blePacket bytesIn if there are no bytes in
-        if (blePacket->bytesIn == 0) blePacket->bytesIn = 1;
       }
       break;
     default:
