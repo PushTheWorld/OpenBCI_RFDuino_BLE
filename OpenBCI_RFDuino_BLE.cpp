@@ -24,6 +24,7 @@ OpenBCI_RFDuino_BLE_Class::OpenBCI_RFDuino_BLE_Class() {
   secreteKey = 12345; // Random number
   debugMode = false; // Set true if doing dongle-dongle sim
   lastTimeSerialRead = 0;
+  connectedDevice = false;
 }
 
 /**
@@ -312,8 +313,8 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferBLEHeadReadyToMove(void) {
   // TODO: I'm commenting out the wait for bufferStreamTimeout with blePackets
   //  because the state will only be ready after three stream packets have been
   //  recieved which is for sure a streaming packet condition.
-  // return (bufferBLE + head)->state == BLE_PACKET_STATE_READY && bufferStreamTimeout();
-  return (bufferBLE + head)->state == BLE_PACKET_STATE_READY;// && bufferStreamTimeout();
+  // return (bufferBLE + head)->state == STREAM_STATE_READY && bufferStreamTimeout();
+  return (bufferBLE + head)->state == STREAM_STATE_READY;// && bufferStreamTimeout();
 }
 
 /**

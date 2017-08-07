@@ -82,7 +82,7 @@ public:
     boolean     bufferBLEHeadReadyToMove(void);
     void        bufferBLEReset();
     void        bufferBLEReset(BLEPacket *);
-    void        bufferBLESend(void);
+    void        bufferBLETailSend(void);
     boolean     bufferBLETailReadyToSend(void);
     void        bufferCleanChar(char *, int);
     void        bufferCleanCompleteBuffer(Buffer *, int);
@@ -161,7 +161,6 @@ public:
     BufferRadio *currentRadioBuffer;
     volatile uint8_t head;
     volatile uint8_t tail;
-    volatile boolean connectedDevice;
     Buffer bufferSerial;
     PacketBuffer *currentPacketBufferSerial;
 
@@ -174,11 +173,12 @@ public:
     volatile boolean sendingMultiPacket;
     volatile unsigned long timeOfLastPoll;
 
+    volatile boolean connectedDevice;
     volatile boolean isWaitingForNewSecreteKeyConfirmation;
     volatile boolean isWaitingForNewPollTimeConfirmation;
+    volatile boolean systemUp;
     volatile boolean sendSerialAck;
     volatile boolean printMessageToDriverFlag;
-    volatile boolean systemUp;
     volatile boolean packetInTXRadioBuffer;
 
     STREAM_STATE curStreamState;

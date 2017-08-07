@@ -37,11 +37,10 @@ void go() {
 
 void testBufferBLE() {
   testBufferBLEReset();
-  testBufferBLESend();
+  testbufferBLETailSend();
   testBufferBLETailReadyToSend();
   testBufferBLEHeadMove();
   testBufferBLEHeadReadyToMove();
-
 }
 
 void testBufferBLEHeadMove() {
@@ -49,13 +48,13 @@ void testBufferBLEHeadMove() {
 
   radioBLE.bufferBLEReset();
 
-  test.assertTrue(bufferBLEHeadReadyToMove(), "should not be ready to move", __LINE__);
+  test.assertTrue(radioBLE.bufferBLEHeadReadyToMove(), "should not be ready to move", __LINE__);
 
   writeAStreamPacketToAddChar(0xC0);
   writeAStreamPacketToAddChar(0xC0);
   writeAStreamPacketToAddChar(0xC0);
 
-  test.assertTrue(bufferBLEHeadReadyToMove(), "should be ready to move", __LINE__);
+  test.assertTrue(radioBLE.bufferBLEHeadReadyToMove(), "should be ready to move", __LINE__);
 
 }
 
@@ -77,17 +76,51 @@ void testBufferBLEReset() {
 
   writeAStreamPacketToAddChar(0xC0);
 
-  bufferBLEReset(bufferBLE);
+  radioBLE.bufferBLEReset(radioBLE.bufferBLE);
 
-  test.assertEqual(bufferBLE->bytesIn, (int)0, "should reset bytesIn to 0", __LINE__);
-  test.assertEqual(bufferBLE->state, radioBLE.STREAM_STATE_INIT, "should set state to init", __LINE__);
+  test.assertEqual(radioBLE.bufferBLE->bytesIn, (int)0, "should reset bytesIn to 0", __LINE__);
+  test.assertEqual(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_INIT, "should set state to init", __LINE__);
 }
 
-void testBufferBLESend() {
-  test.describe("bufferBLESend");
+void testbufferBLETailSend() {
+  test.describe("bufferBLETailSend");
+  radioBLE.bufferBLEReset();
+
+  test.it("should not move tail if no connected device");
+  radioBLE.bufferBLETailSend();
+  test.assertEqual(radioBLE.tail, (int)0, "should not have moved the tail");
+
+
+  test.it("should move tail if connected device is true");
+  radioBLE.connectedDevice = true;
+  for (int i = 0; i < NUM_BLE_PACKETS; i++) {
+    radioBLE.bufferBLETailSend();
+    test.assertEqual(radioBLE.tail, i, "should move tail", __LINE__);
+  }
+  radioBLE.bufferBLETailSend();
+  test.assertEqual(radioBLE.tail, 0, "tail should wrap around", __LINE__);
 }
+
 void testBufferBLETailReadyToSend() {
   test.describe("bufferBLETailReadyToSend");
+  radioBLE.bufferBLEReset();
+
+  test.it("should not be ready to send tail if head equals tail");
+  test.assertFalse(radioBLE.bufferBLETailReadyToSend(), "should not be ready to send tail ble packet", __LINE__);
+
+  test.it("should still not be ready to send tail because packet not ready");
+  radioBLE.bufferBLEHeadMove();
+  test.assertFalse(radioBLE.bufferBLETailReadyToSend(), "should not be ready to send tail ble packet", __LINE__);
+
+  radioBLE.bufferBLEReset();
+
+  test.it("should be ready to send once packet loaded into tail ble packet and head is moved");
+  writeAStreamPacketToAddChar(0xC0);
+  writeAStreamPacketToAddChar(0xC0);
+  writeAStreamPacketToAddChar(0xC0);
+  radioBLE.bufferBLEHeadMove();
+  test.assertTrue(radioBLE.bufferBLETailReadyToSend(), "should be ready to send tail ble packet", __LINE__);
+
 }
 
 
@@ -113,8 +146,8 @@ void testBufferStreamAddChar_STREAM_STATE_INIT() {
     radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, newChar);
     test.assertEqualHex(radioBLE.spBuffer.state, radioBLE.STREAM_STATE_STORING, "should enter state storing", __LINE__);
     test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_STORING, "should enter state storing", __LINE__);
-    test.assertEqual(radioBLE.spBuffer.data[0], newChar,"should have stored the new char", __LINE__);
-    test.assertEqual(radioBLE.bufferBLE->data[0], newChar,"should have stored the new char", __LINE__);
+    test.assertEqual(radioBLE.spBuffer.data[0], (int)newChar,"should have stored the new char", __LINE__);
+    test.assertEqual(radioBLE.bufferBLE->data[0], (int)newChar,"should have stored the new char", __LINE__);
     test.assertEqual(radioBLE.spBuffer.bytesIn, (uint8_t)1, "should have read one byte in", __LINE__);
     test.assertEqual(radioBLE.bufferBLE->bytesIn, (uint8_t)1, "should have read one byte in", __LINE__);
 
@@ -125,8 +158,8 @@ void testBufferStreamAddChar_STREAM_STATE_INIT() {
     radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, newChar);
     test.assertEqualHex(radioBLE.spBuffer.state, radioBLE.STREAM_STATE_INIT, "should stay in init state", __LINE__);
     test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_INIT, "should stay in init state", __LINE__);
-    test.assertNotEqual(radioBLE.spBuffer.data[0], (char)newChar, "should not have stored the new char", __LINE__);
-    test.assertNotEqual(radioBLE.bufferBLE->data[0], (char)newChar, "should not have stored the new char", __LINE__);
+    test.assertNotEqual(radioBLE.spBuffer.data[0], (int)newChar, "should not have stored the new char", __LINE__);
+    test.assertNotEqual(radioBLE.bufferBLE->data[0], (int)newChar, "should not have stored the new char", __LINE__);
     test.assertEqual(radioBLE.spBuffer.bytesIn, (uint8_t)0, "should not have read any bytes in", __LINE__);
     test.assertEqual(radioBLE.bufferBLE->bytesIn, (uint8_t)0, "should not have read any bytes in", __LINE__);
 }
