@@ -25,8 +25,8 @@ void go() {
   test.begin();
   digitalWrite(ledPin, HIGH);
 
-  // testBufferBLE();
-  // testProcessChar();
+  testBufferBLE();
+  testProcessChar();
   testBufferStreamAddChar();
   // testProcessRadioChar();
   // testByteIdMakeStreamPacketType();
@@ -47,6 +47,7 @@ void testBufferBLEHeadMove() {
   test.describe("bufferBLEHeadMove");
 
   radioBLE.bufferBLEReset();
+  radioBLE.bufferStreamReset();
 
   test.assertFalse(radioBLE.bufferBLEHeadReadyToMove(), "should not be ready to move", __LINE__);
 
@@ -62,6 +63,8 @@ void testBufferBLEHeadMove() {
 
 void testBufferBLEHeadReadyToMove() {
   test.describe("bufferBLEHeadReadyToMove");
+  radioBLE.bufferBLEReset();
+  radioBLE.bufferStreamReset();
 
   for (int i = 0; i < NUM_BLE_PACKETS; i++) {
     test.assertEqual(radioBLE.head, i, "should move head", __LINE__);
@@ -74,6 +77,7 @@ void testBufferBLEHeadReadyToMove() {
 void testBufferBLEReset() {
   test.describe("bufferBLEReset");
   radioBLE.bufferBLEReset();
+  radioBLE.bufferStreamReset();
 
   writeAStreamPacketToAddChar(0xC0);
 
@@ -85,6 +89,8 @@ void testBufferBLEReset() {
 
 void testBufferBLETailMove() {
   test.describe("bufferBLETailMove");
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
 
   test.it("should move tail if connected device is true");
   for (int i = 0; i < NUM_BLE_PACKETS; i++) {
@@ -103,6 +109,7 @@ void testBufferBLETailMove() {
 void testBufferBLETailSend() {
   test.describe("bufferBLETailSend");
   radioBLE.bufferBLEReset();
+  radioBLE.bufferStreamReset();
 
   test.it("should not move tail if no connected device");
   radioBLE.bufferBLETailSend();
@@ -112,6 +119,7 @@ void testBufferBLETailSend() {
 void testBufferBLETailReadyToSend() {
   test.describe("bufferBLETailReadyToSend");
   radioBLE.bufferBLEReset();
+  radioBLE.bufferStreamReset();
 
   test.it("should not be ready to send tail if head equals tail");
   test.assertFalse(radioBLE.bufferBLETailReadyToSend(), "should not be ready to send tail ble packet", __LINE__);
@@ -140,6 +148,7 @@ void testBufferStreamAddChar() {
   testBufferStreamAddChar_STREAM_STATE_STORING();
   testBufferStreamAddChar_STREAM_STATE_GOT_ALL_PACKETS();
   testBufferStreamAddChar_STREAM_STATE_READY();
+  testBufferStreamAddChar_STREAM_STATE_TAIL();
 
 }
 
@@ -172,7 +181,7 @@ void testBufferStreamAddChar_STREAM_STATE_INIT() {
 }
 
 void testBufferStreamAddChar_STREAM_STATE_GOT_ALL_PACKETS() {
-  test.detail("STREAM_STATE_TAIL");
+  test.detail("STREAM_STATE_GOT_ALL_PACKETS");
 
   char newChar = 'A';
   uint8_t expected_sampleNumber = 70;
@@ -238,11 +247,23 @@ void testBufferStreamAddChar_STREAM_STATE_TAIL() {
   test.assertEqualHex(radioBLE.spBuffer.state, radioBLE.STREAM_STATE_READY, "should be in the ready state", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[2], (uint8_t)0, "should set the 1st byte of 1st chan to 0", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[3], (uint8_t)0, "should set the 2nd byte of 1st chan to 0", __LINE__);
-  test.assertEqualHex(radioBLE.bufferBLE->data[4], (uint8_t)1, "should set the 3rd byte of 1st chan to 1", __LINE__);
+  test.assertEqualHex(radioBLE.bufferBLE->data[4], (uint8_t)0, "should set the 3rd byte of 1st chan to 1", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[5], (uint8_t)0, "should set the 1st byte of 2nd chan to 0", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[6], (uint8_t)0, "should set the 2nd byte of 2nd chan to 0", __LINE__);
-  test.assertEqualHex(radioBLE.bufferBLE->data[7], (uint8_t)2, "should set the 3rd byte of 2nd chan to 2", __LINE__);
+  test.assertEqualHex(radioBLE.bufferBLE->data[7], (uint8_t)1, "should set the 3rd byte of 2nd chan to 2", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_STORING, "radioBLE should be in the storing state", __LINE__);
+
+  test.it("should set the ble packet to ready state");
+  newChar = (char)OPENBCI_STREAM_PACKET_TAIL;
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset(radioBLE.bufferBLE);
+  writeAStreamPacketToAddChar(newChar);
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  writeAStreamPacketToAddChar(newChar);
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  writeAStreamPacketToAddChar(newChar);
+
+  test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_READY, "radioBLE should be in the ready state", __LINE__);
 
   test.it("should set state to init if byte is not stop byte or head byte");
   newChar = (char)0x00;
@@ -321,8 +342,7 @@ void testBufferStreamAddChar_STREAM_STATE_STORING() {
   test.assertEqualHex(radioBLE.bufferBLE->data[6], (uint8_t)0, "should set the 2nd byte of 2nd chan to 0", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[7], (uint8_t)2, "should set the 3rd byte of 2nd chan to 2", __LINE__);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x41); // make the first one a stream one so 0x41
-  expected_sampleNumber += 1;
-  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, expected_sampleNumber); // Sample number what have you
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, expected_sampleNumber + 1); // Sample number what have you
   for (byte i = 1; i < 9; i++) { bufferStreamAdd3Byte(i); }
   for (byte i = 0; i < 3; i++) { bufferStreamAdd2Byte(i); }
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, newChar);
@@ -334,8 +354,7 @@ void testBufferStreamAddChar_STREAM_STATE_STORING() {
   test.assertEqualHex(radioBLE.bufferBLE->data[12], (uint8_t)0, "should set the 2nd byte of 2nd chan to 0", __LINE__);
   test.assertEqualHex(radioBLE.bufferBLE->data[13], (uint8_t)2, "should set the 3rd byte of 2nd chan to 2", __LINE__);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x41); // make the first one a stream one so 0x41
-  expected_sampleNumber += 1;
-  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, expected_sampleNumber); // Sample number what have you
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, expected_sampleNumber + 2); // Sample number what have you
   for (byte i = 1; i < 9; i++) { bufferStreamAdd3Byte(i); }
   for (byte i = 0; i < 3; i++) { bufferStreamAdd2Byte(i); }
   test.it("finally should load first two channels into bytes 14-19 on ble packet");
@@ -545,23 +564,23 @@ void testProcessCharOverflow() {
     radioBLE.bufferStreamReset();
     radioBLE.bufferBLEReset();
     // Write the max number of bytes in buffers
-    int maxBytes = OPENBCI_NUMBER_SERIAL_BUFFERS * OPENBCI_MAX_DATA_BYTES_IN_PACKET;
+    int maxBytes = OPENBCI_NUMBER_SERIAL_BUFFERS * BYTES_PER_BLE_PACKET;
     // Write max bytes but stop 1 before
-    for (int i = 0; i < maxBytes; i++) {
+    for (int i = 0; i < maxBytes - 1; i++) {
         radioBLE.bufferSerialAddChar(0x00);
     }
 
     // Verify that the emergency stop flag has NOT been deployed
-    test.assertBoolean(radioBLE.bufferSerial.overflowed,false,"Overflow emergency not hit",__LINE__);
+    test.assertFalse(radioBLE.bufferSerial.overflowed, "Overflow emergency not hit", __LINE__);
     // Verify that there are 15 buffers filled
-    test.assertEqualHex(radioBLE.bufferSerial.numberOfPacketsToSend,OPENBCI_NUMBER_SERIAL_BUFFERS,"15 buffers",__LINE__);
+    test.assertEqualHex(radioBLE.bufferSerial.numberOfPacketsToSend, OPENBCI_NUMBER_SERIAL_BUFFERS,"15 buffers",__LINE__);
     // Verify the write position
-    test.assertEqualHex((radioBLE.bufferSerial.packetBuffer + OPENBCI_NUMBER_SERIAL_BUFFERS - 1)->positionWrite,OPENBCI_MAX_PACKET_SIZE_BYTES,"32 bytes in buffer",__LINE__);
+    test.assertEqualHex((radioBLE.bufferSerial.packetBuffer + OPENBCI_NUMBER_SERIAL_BUFFERS - 1)->positionWrite, BYTES_PER_BLE_PACKET, "20 bytes in buffer", __LINE__);
 
     // Write one more byte to overflow the buffer
     radioBLE.bufferSerialAddChar(0x00);
     // Verify that the emergency stop flag has been deployed
-    test.assertBoolean(radioBLE.bufferSerial.overflowed,true,"Overflow emergency",__LINE__);
+    test.assertTrue(radioBLE.bufferSerial.overflowed, "Overflow emergency", __LINE__);
 
     // Remember to clean up after yourself
     testProcessChar_CleanUp();
