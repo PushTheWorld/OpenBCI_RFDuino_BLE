@@ -318,19 +318,24 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferBLEHeadReadyToMove(void) {
 }
 
 /**
- * Used to send the tail of the ble packet buffer to the connected device
+ * Should reset current tail buffer and move tail with wrap around protection
  */
-void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
-  if (!connectedDevice) return;
-
-  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
-    ;  // all tx buffers in use (can't send - try again later)
-
+void OpenBCI_RFDuino_BLE_Class::bufferBLETailMove(void) {
   bufferBLEReset(bufferBLE + tail);
   tail++;
   if (tail > (NUM_BLE_PACKETS - 1)) {
     tail = 0;
   }
+}
+
+/**
+ * Used to send the tail of the ble packet buffer to the connected device
+ */
+void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
+  if (!connectedDevice) return;
+  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
+    ;  // all tx buffers in use (can't send - try again later)
+  bufferBLETailMove();
 }
 
 boolean OpenBCI_RFDuino_BLE_Class::bufferBLETailReadyToSend(void) {
@@ -731,8 +736,17 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       }
       break;
     case STREAM_STATE_STORING:
-      if (spBuffer.bytesIn >= 2 && spBuffer.bytesIn <= 8 || blePacket->bytesIn == 0) {
-        blePacket->data[blePacket->bytesIn++] = newChar;
+      Serial.print("storing: 0x");
+      if (newChar < 15) Serial.print("0");
+      Serial.println(newChar, HEX);
+      if (spBuffer.bytesIn == 1 && blePacket->bytesIn == 0) {
+        blePacket->data[1] = newChar;
+        blePacket->bytesIn = 2;
+        Serial.println("stored sample number");
+      } else if (spBuffer.bytesIn >= 2 && spBuffer.bytesIn <= 8 || blePacket->bytesIn == 0) {
+        Serial.printf("loading: %d | ble->bytesIn: %d", spBuffer.bytesIn, blePacket->bytesIn);
+        blePacket->data[blePacket->bytesIn] = newChar;
+        blePacket->bytesIn++;
         if (blePacket->bytesIn >= POSITION_ACCEL_BYTE) {
           blePacket->state = STREAM_STATE_GOT_ALL_PACKETS;
         }
@@ -753,12 +767,15 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     case STREAM_STATE_READY:
       // Got a 34th byte, go back to start
       spBuffer.state = STREAM_STATE_INIT;
-      blePacket->state = STREAM_STATE_INIT;
       // Set bytes in to 0
       spBuffer.bytesIn = 0;
-      blePacket->bytesIn = 0;
-
-      break;
+      if (!bufferStreamTimeout()) {
+        // if the stream packet buffer did not timeout, then this is not a
+        //  stream packet.
+        blePacket->state = STREAM_STATE_INIT;
+        blePacket->bytesIn = 0;
+      }
+      // break; INTENTIONALLY COMMENTED BREAK OUT FOR TEST OF NEW CHAR AS STREAM
     case STREAM_STATE_INIT:
       if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
         // Move the state
