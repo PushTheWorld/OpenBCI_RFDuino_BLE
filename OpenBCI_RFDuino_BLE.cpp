@@ -81,7 +81,7 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
   head = 0;
   tail = 0;
 
-  blePacketReset();
+  bufferBLEReset();
 
   configureDevice(); // setup for Device
 }
@@ -192,7 +192,7 @@ boolean OpenBCI_RFDuino_BLE_Class::flashNonVolatileMemory(void) {
 boolean OpenBCI_RFDuino_BLE_Class::sendPacketToConnectedDevice(void) {
 
   // Reset the stream buffers
-  blePacketReset();
+  bufferBLEReset(bufferBLE + head);
 
   int packetNumber = bufferSerial.numberOfPacketsToSend - bufferSerial.numberOfPacketsSent - 1;
 
@@ -202,7 +202,7 @@ boolean OpenBCI_RFDuino_BLE_Class::sendPacketToConnectedDevice(void) {
   // Add the byteId to the packet
   // (bufferSerial.packetBuffer + bufferSerial.numberOfPacketsSent)->data[0] = byteId;
 
-  while (! RFduinoBLE.send((const char *)(radioBLE.blePackets + radioBLE.tail)->data, BYTES_PER_BLE_PACKET))
+  while (! RFduinoBLE.send((const char *)(radioBLE.bufferBLE + radioBLE.tail)->data, BYTES_PER_BLE_PACKET))
     ;  // all tx buffers in use (can't send - try again later)
 
   bufferSerial.numberOfPacketsSent++;
@@ -269,6 +269,71 @@ void OpenBCI_RFDuino_BLE_Class::writeBufferToSerial(char *buffer, int length) {
   for (int i = 0; i < length; i++) {
     Serial.write(buffer[i]);
   }
+}
+
+/**
+* @description Resets the stream packet buffer to default settings
+* @author AJ Keller (@pushtheworldllc)
+*/
+void OpenBCI_RFDuino_BLE_Class::bufferBLEReset(void) {
+  for (int i = 0; i < NUM_BLE_PACKETS; i++) {
+    bufferBLEReset(bufferBLE + i);
+  }
+  head = 0;
+  tail = 0;
+}
+
+/**
+* @description Resets the stream packet buffer to default settings
+* @param `buf` {StreamPacketBuffer *} - Pointer to a stream packet buffer to reset
+* @author AJ Keller (@pushtheworldllc)
+*/
+void OpenBCI_RFDuino_BLE_Class::bufferBLEReset(BLEPacket *blePacket) {
+  blePacket->bytesIn = 0;
+  blePacket->state = STREAM_STATE_INIT;
+}
+
+/**
+ * Used to safely move the head of the ble packet buffer.
+ */
+void OpenBCI_RFDuino_BLE_Class::bufferBLEHeadMove(void) {
+  head++;
+  if (head > (NUM_BLE_PACKETS - 1)) {
+    head = 0;
+  }
+}
+
+/**
+ * Used to determine if the head is ready to be moved
+ * @return  {boolean} `true` if 3 packets have been loaded into blePacket and
+ *                    enough time has passed.
+ */
+boolean OpenBCI_RFDuino_BLE_Class::bufferBLEHeadReadyToMove(void) {
+  // TODO: I'm commenting out the wait for bufferStreamTimeout with blePackets
+  //  because the state will only be ready after three stream packets have been
+  //  recieved which is for sure a streaming packet condition.
+  // return (bufferBLE + head)->state == BLE_PACKET_STATE_READY && bufferStreamTimeout();
+  return (bufferBLE + head)->state == BLE_PACKET_STATE_READY;// && bufferStreamTimeout();
+}
+
+/**
+ * Used to send the tail of the ble packet buffer to the connected device
+ */
+void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
+  if (!connectedDevice) return;
+
+  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
+    ;  // all tx buffers in use (can't send - try again later)
+
+  bufferBLEReset(bufferBLE + tail);
+  tail++;
+  if (tail > (NUM_BLE_PACKETS - 1)) {
+    tail = 0;
+  }
+}
+
+boolean OpenBCI_RFDuino_BLE_Class::bufferBLETailReadyToSend(void) {
+  return head != tail && (bufferBLE+tail)->state == STREAM_STATE_READY;
 }
 
 /**
@@ -654,7 +719,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
           // Move the state
           spBuffer.state = STREAM_STATE_STORING;
-          blePackets->state = STREAM_STATE_STORING;
+          bufferBLE->state = STREAM_STATE_STORING;
           // Store to the buffer
           spBuffer.data[0] = newChar;
           // Set to 1
@@ -720,28 +785,6 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
 void OpenBCI_RFDuino_BLE_Class::bufferStreamReset(void) {
   spBuffer.bytesIn = 0;
   spBuffer.state = STREAM_STATE_INIT;
-}
-
-/**
-* @description Resets the stream packet buffer to default settings
-* @author AJ Keller (@pushtheworldllc)
-*/
-void OpenBCI_RFDuino_BLE_Class::blePacketReset(void) {
-  for (int i = 0; i < NUM_BLE_PACKETS; i++) {
-    blePacketReset(blePackets + i);
-  }
-  head = 0;
-  tail = 0;
-}
-
-/**
-* @description Resets the stream packet buffer to default settings
-* @param `buf` {StreamPacketBuffer *} - Pointer to a stream packet buffer to reset
-* @author AJ Keller (@pushtheworldllc)
-*/
-void OpenBCI_RFDuino_BLE_Class::blePacketReset(BLEPacket *blePacket) {
-  blePacket->bytesIn = 0;
-  blePacket->state = STREAM_STATE_INIT;
 }
 
 /**

@@ -22,7 +22,7 @@ void serialEvent(void){
   // Store it to serial buffer
   char newChar = Serial.read();
   radioBLE.bufferSerialAddChar(newChar);
-  radioBLE.bufferStreamAddChar(radioBLE.blePackets + radioBLE.head, newChar);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
 
@@ -43,7 +43,7 @@ void loop() {
     radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
 
     // Reset the stream buffer
-    radioBLE.blePacketReset();
+    radioBLE.bufferBLEReset();
 
     // Send reset message to the board
     radioBLE.resetPic32();
@@ -56,7 +56,7 @@ void loop() {
     //   radio.bufferSerial.overflowed = false;
     // }
   } else {
-    if ((radioBLE.blePackets + radioBLE.head)->state == radioBLE.BLE_PACKET_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
+    if ((radioBLE.bufferBLE + radioBLE.head)->state == radioBLE.BLE_PACKET_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
       // Load the packet into the BLESendPacketBuffer
       if (radioBLE.bufferStreamTimeout()) {
         // We are sure this is a streaming packet.
@@ -67,16 +67,8 @@ void loop() {
       }
     }
 
-    if ((radioBLE.blePackets + radioBLE.tail)->state == radioBLE.STREAM_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
-      if (radioBLE.head != radioBLE.tail) {
-        while (! RFduinoBLE.send((const char *)(radioBLE.blePackets + radioBLE.tail)->data, BYTES_PER_BLE_PACKET))
-          ;  // all tx buffers in use (can't send - try again later)
-        // Try to add the tail to the TX buffer
-        radioBLE.tail++;
-        if (radioBLE.tail > (NUM_BLE_PACKETS - 1)) {
-          radioBLE.tail = 0;
-        }
-      }
+    if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?
+      radioBLE.bufferBLESend();
     }
 
     if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to Host

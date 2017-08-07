@@ -77,9 +77,13 @@ public:
     void        begin();
     void        begin(uint32_t);
     void        beginDebug(uint32_t);
-    void        blePacketReset();
-    void        blePacketReset(BLEPacket *);
     void        bufferAddTimeSyncSentAck(void);
+    void        bufferBLEHeadMove(void);
+    boolean     bufferBLEHeadReadyToMove(void);
+    void        bufferBLEReset();
+    void        bufferBLEReset(BLEPacket *);
+    void        bufferBLESend(void);
+    boolean     bufferBLETailReadyToSend(void);
     void        bufferCleanChar(char *, int);
     void        bufferCleanCompleteBuffer(Buffer *, int);
     void        bufferCleanCompletePacketBuffer(PacketBuffer *, int);
@@ -150,7 +154,7 @@ public:
     // SHARED VARIABLES //
     //////////////////////
     // CUSTOMS
-    BLEPacket blePackets[NUM_BLE_PACKETS];
+    BLEPacket bufferBLE[NUM_BLE_PACKETS];
     StreamPacketBuffer spBuffer;
     BufferRadio bufferRadio[OPENBCI_NUMBER_RADIO_BUFFERS];
     uint8_t currentRadioBufferNum;
