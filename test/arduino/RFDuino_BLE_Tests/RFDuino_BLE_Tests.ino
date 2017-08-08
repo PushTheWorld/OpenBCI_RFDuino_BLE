@@ -52,11 +52,11 @@ void testBufferBLEHeadMove() {
   test.assertFalse(radioBLE.bufferBLEHeadReadyToMove(), "should not be ready to move", __LINE__);
 
   writeAStreamPacketToAddChar(0xC0);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(0xC0);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(0xC0);
-
+  delay(1000);
   test.assertTrue(radioBLE.bufferBLEHeadReadyToMove(), "should be ready to move", __LINE__);
 
 }
@@ -132,9 +132,9 @@ void testBufferBLETailReadyToSend() {
 
   test.it("should be ready to send once packet loaded into tail ble packet and head is moved");
   writeAStreamPacketToAddChar(0xC0);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(0xC0);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(0xC0);
   radioBLE.bufferBLEHeadMove();
   test.assertTrue(radioBLE.bufferBLETailReadyToSend(), "should be ready to send tail ble packet", __LINE__);
@@ -258,9 +258,9 @@ void testBufferStreamAddChar_STREAM_STATE_TAIL() {
   radioBLE.bufferStreamReset();
   radioBLE.bufferBLEReset(radioBLE.bufferBLE);
   writeAStreamPacketToAddChar(newChar);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(newChar);
-  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS;
+  radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(newChar);
 
   test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_READY, "radioBLE should be in the ready state", __LINE__);

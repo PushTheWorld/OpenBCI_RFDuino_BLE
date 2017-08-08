@@ -632,7 +632,7 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferSerialAddChar(char newChar) {
       if (bufferSerial.numberOfPacketsToSend == OPENBCI_NUMBER_SERIAL_BUFFERS) {
         // Set the overflowed flag equal to true
         bufferSerial.overflowed = true;
-        // Serial.println("OVR");
+        Serial.println("OVR");
         // End the subroutine with a failure
         return false;
 
@@ -703,7 +703,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
 
   switch (spBuffer.state) {
     case STREAM_STATE_TAIL:
-      Serial.println(" tail");
+      // Serial.println(" tail");
       // Is the current char equal to 0xCX where X is 0-F?
       if (isATailByte(newChar)) {
         // Set the type byte
@@ -748,13 +748,13 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       if (spBuffer.bytesIn == 1 && blePacket->bytesIn == 0) {
         blePacket->data[1] = newChar;
         blePacket->bytesIn = 2;
-        Serial.println(" stored sample number");
+        // Serial.println(" stored sample number");
       } else if (spBuffer.bytesIn >= 2 && spBuffer.bytesIn <= 7) {
         // Serial.printf(" loading: %d | ble->bytesIn: %d\n", spBuffer.bytesIn, blePacket->bytesIn);
         blePacket->data[blePacket->bytesIn] = newChar;
         blePacket->bytesIn++;
         if (blePacket->bytesIn > POSITION_ACCEL_BYTE) {
-          Serial.println("Got all packets");
+          // Serial.println("Got all packets");
           blePacket->state = STREAM_STATE_GOT_ALL_PACKETS;
         }
       // } else {
@@ -774,12 +774,13 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     //  packet which means this is not a stream packet, it's part of a
     //  bigger message
     case STREAM_STATE_READY:
-      Serial.println(" ready");
+      // Serial.println(" ready");
       // Got a 34th byte, go back to start
       spBuffer.state = STREAM_STATE_INIT;
       // Set bytes in to 0
       spBuffer.bytesIn = 0;
       if (!bufferStreamTimeout()) {
+        // Serial.println("fuck ya");
         // if the stream packet buffer did not timeout, then this is not a
         //  stream packet.
         blePacket->state = STREAM_STATE_INIT;
@@ -792,7 +793,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     case STREAM_STATE_INIT:
       // Serial.println(" init");
       if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
-        Serial.println(" head");
+        // Serial.println(" head");
         // Move the state
         spBuffer.state = STREAM_STATE_STORING;
         blePacket->state = STREAM_STATE_STORING;
