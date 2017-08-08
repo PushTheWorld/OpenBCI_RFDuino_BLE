@@ -56,19 +56,12 @@ void loop() {
     //   radio.bufferSerial.overflowed = false;
     // }
   } else {
-    if ((radioBLE.bufferBLE + radioBLE.head)->state == radioBLE.BLE_PACKET_STATE_READY) { // Is there a stream packet waiting to get sent to the Host?
-      // Load the packet into the BLESendPacketBuffer
-      if (radioBLE.bufferStreamTimeout()) {
-        // We are sure this is a streaming packet.
-        radioBLE.head++;
-        if (radioBLE.head > (NUM_BLE_PACKETS - 1)) {
-          radioBLE.head = 0;
-        }
-      }
+    if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
+      radioBLE.bufferBLEHeadMove();
     }
 
     if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?
-      radioBLE.bufferBLESend();
+      radioBLE.bufferBLETailSend();
     }
 
     if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to Host
