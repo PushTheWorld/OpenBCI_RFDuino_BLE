@@ -83,7 +83,6 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
   tail = 0;
 
   bufferBLEReset();
-
   configureDevice(); // setup for Device
 }
 
@@ -94,13 +93,8 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
 void OpenBCI_RFDuino_BLE_Class::configureDevice(void) {
   // Need to override the default baurd rate limit of 9600
   override_uart_limit = true;
-  RFduinoBLE.advertisementData = "OBCI";
-#ifdef DEBUG
-  Serial.println("Waiting for connection...");
-#endif
-  RFduinoBLE.begin();
-  // Configure pins
 
+  // Configure pins
   if (debugMode) { // Dongle to Dongle debug mode
     // BEGIN: To run host as device
     pinMode(OPENBCI_PIN_HOST_RESET,INPUT);

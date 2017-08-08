@@ -6,7 +6,7 @@
  */
 
 unsigned long lastTimePacketSent = 0;
-uint8_t *output = "pushtheworldajkellerpushtheworld!";
+char output[] = "pushtheworldajkellerpushtheworld!";
 
 uint8_t counter = 0;
 // the setup routine runs once when you press reset:
@@ -24,7 +24,10 @@ void setup() {
 void loop() {
   if (millis() > (lastTimePacketSent + 4)) {
     output[1] = counter++;
-    Serial.write((const char *)output, 33);
+    for (int i = 0; i < 33; i++) {
+      Serial.write(output[i]);
+    }
+    // Serial.write((const char *)output, 33);
    lastTimePacketSent = millis();
   }
 }

@@ -11,7 +11,7 @@
 *  you downloaded from github. Free to use and share. This code presented for
 *  use as-is.
 */
-#define DEBUG 1
+// #define DEBUG 1
 #include <RFduinoBLE.h>
 #include "OpenBCI_RFDuino_BLE.h"
 uint8_t buffer[BYTES_PER_BLE_PACKET];
@@ -21,16 +21,28 @@ void serialEvent(void){
   // Mark the last serial as now;
   // Store it to serial buffer
   char newChar = Serial.read();
+  // Serial.print("0x");
+  // if (newChar < 10) Serial.print("0");
+  // Serial.println(newChar,HEX);
   radioBLE.bufferSerialAddChar(newChar);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
 
 void setup() {
+  // override_uart_limit = true;
+  // Serial.begin(115200);
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
   radioBLE.beginDebug(123456);
+  // Serial.println("helllo");
+  // delay(100);
+
+  RFduinoBLE.advertisementData = "OBCI";
+  Serial.println("Waiting for connection...");
+  RFduinoBLE.begin();
+
 }
 
 void loop() {
@@ -57,6 +69,7 @@ void loop() {
     // }
   } else {
     if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
+
       radioBLE.bufferBLEHeadMove();
     }
 
@@ -90,9 +103,7 @@ void loop() {
  */
 void RFduinoBLE_onConnect() {
   radioBLE.connectedDevice = true;
-#ifdef DEBUG
   Serial.println("Connected");
-#endif
   // first send is not possible until the iPhone completes service/characteristic discovery
 }
 
@@ -102,9 +113,7 @@ void RFduinoBLE_onConnect() {
  */
 void RFduinoBLE_onDisconnect() {
   radioBLE.connectedDevice = false;
-#ifdef DEBUG
   Serial.println("Disconnected");
-#endif
   // first send is not possible until the iPhone completes service/characteristic discovery
 }
 
