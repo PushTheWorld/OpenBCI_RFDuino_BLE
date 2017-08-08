@@ -609,13 +609,15 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferRadioSwitchToOtherBuffer(void) {
 */
 boolean OpenBCI_RFDuino_BLE_Class::bufferSerialAddChar(char newChar) {
   // Is the serial buffer overflowed?
+
   if (bufferSerial.overflowed) {
     // End the subroutine
     // Serial.println("OVR");
     return false;
   } else {
-    // Is the current buffer's write position less than max size of 32?
+    // Is the current buffer's write position less than max size of 20?
     if (currentPacketBufferSerial->positionWrite < BYTES_PER_BLE_PACKET) {
+      // Serial.printf("- packs 2 send: %d | pw: %d\n", bufferSerial.numberOfPacketsToSend, currentPacketBufferSerial->positionWrite);
       // Store the char into the serial buffer at the write position
       currentPacketBufferSerial->data[currentPacketBufferSerial->positionWrite] = newChar;
       // Increment the write position
@@ -629,10 +631,10 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferSerialAddChar(char newChar) {
 
     } else {
       // Are we out of serial buffers?
-      if (bufferSerial.numberOfPacketsToSend == OPENBCI_NUMBER_SERIAL_BUFFERS) {
+      if (bufferSerial.numberOfPacketsToSend >= OPENBCI_NUMBER_SERIAL_BUFFERS - 1) {
         // Set the overflowed flag equal to true
         bufferSerial.overflowed = true;
-        Serial.println("OVR");
+        // Serial.println("OVR");
         // End the subroutine with a failure
         return false;
 
@@ -641,7 +643,7 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferSerialAddChar(char newChar) {
         currentPacketBufferSerial++;
         // Increment the number of packets to send
         bufferSerial.numberOfPacketsToSend++;
-        // Serial.print("#p2s1: "); Serial.println(bufferSerial.numberOfPacketsToSend);
+        // Serial.printf("-- packs 2 send: %d | pw: %d\n", bufferSerial.numberOfPacketsToSend, currentPacketBufferSerial->positionWrite);
 
         // Store the char into the serial buffer at the write position
         currentPacketBufferSerial->data[currentPacketBufferSerial->positionWrite] = newChar;

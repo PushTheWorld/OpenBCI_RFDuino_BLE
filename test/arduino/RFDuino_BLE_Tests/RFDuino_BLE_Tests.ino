@@ -28,8 +28,8 @@ void go() {
   testBufferBLE();
   testProcessChar();
   testBufferStreamAddChar();
-  // testProcessRadioChar();
-  // testByteIdMakeStreamPacketType();
+  testProcessRadioChar();
+  testByteIdMakeStreamPacketType();
 
   digitalWrite(ledPin, LOW);
   test.end();
@@ -56,7 +56,6 @@ void testBufferBLEHeadMove() {
   writeAStreamPacketToAddChar(0xC0);
   radioBLE.lastTimeSerialRead = micros() - OPENBCI_TIMEOUT_PACKET_STREAM_uS * 2;
   writeAStreamPacketToAddChar(0xC0);
-  delay(1000);
   test.assertTrue(radioBLE.bufferBLEHeadReadyToMove(), "should be ready to move", __LINE__);
 
 }
@@ -373,150 +372,150 @@ void testBufferStreamAddChar_STREAM_STATE_STORING() {
 }
 
 void testBufferStreamAddChar_STREAM_STATE_READY() {
-    test.detail("STREAM_STATE_READY");
-    test.it("should change to init state and set bytesIn to 0 when a reset");
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset(radioBLE.bufferBLE);
-    writeAStreamPacketToAddChar(0xC0);
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE,(char)0x00);
-    test.assertEqualHex(radioBLE.spBuffer.state, radioBLE.STREAM_STATE_INIT, "should reset to init state",__LINE__);
-    test.assertEqualHex(radioBLE.spBuffer.bytesIn, 0, "should have reset bytesIn to 0",__LINE__);
-    test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_INIT, "should reset to init state",__LINE__);
-    test.assertEqualHex(radioBLE.bufferBLE->bytesIn, 0, "should have reset bytesIn to 0",__LINE__);
+  test.detail("STREAM_STATE_READY");
+  test.it("should change to init state and set bytesIn to 0 when a reset");
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset(radioBLE.bufferBLE);
+  writeAStreamPacketToAddChar(0xC0);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE,(char)0x00);
+  test.assertEqualHex(radioBLE.spBuffer.state, radioBLE.STREAM_STATE_INIT, "should reset to init state",__LINE__);
+  test.assertEqualHex(radioBLE.spBuffer.bytesIn, 0, "should have reset bytesIn to 0",__LINE__);
+  test.assertEqualHex(radioBLE.bufferBLE->state, radioBLE.STREAM_STATE_INIT, "should reset to init state",__LINE__);
+  test.assertEqualHex(radioBLE.bufferBLE->bytesIn, 0, "should have reset bytesIn to 0",__LINE__);
 }
 
 void testProcessChar() {
-    testIsATailByte();
-    testProcessCharSingleChar();
-    testProcessCharStreamPacket();
-    testProcessCharStreamPackets();
-    testProcessCharNotStreamPacket();
-    testProcessCharOverflow();
+  testIsATailByte();
+  testProcessCharSingleChar();
+  testProcessCharStreamPacket();
+  testProcessCharStreamPackets();
+  testProcessCharNotStreamPacket();
+  testProcessCharOverflow();
 }
 
 void testIsATailByte() {
-    test.describe("isATailByte");
+  test.describe("isATailByte");
 
-    test.assertBoolean(radioBLE.isATailByte(0xC0),true,"Stream packet type 0",__LINE__);
-    test.assertBoolean(radioBLE.isATailByte(0xC1),true,"Stream packet type 1",__LINE__);
-    test.assertBoolean(radioBLE.isATailByte(0xC8),true,"Stream packet type 8",__LINE__);
-    test.assertBoolean(radioBLE.isATailByte(0xCA),true,"Stream packet type 10",__LINE__);
-    test.assertBoolean(radioBLE.isATailByte(0xCF),true,"Stream packet type 15",__LINE__);
-    test.assertBoolean(radioBLE.isATailByte(0xB0),false,"Not a stream packet type",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xC0),true,"Stream packet type 0",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xC1),true,"Stream packet type 1",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xC8),true,"Stream packet type 8",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xCA),true,"Stream packet type 10",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xCF),true,"Stream packet type 15",__LINE__);
+  test.assertBoolean(radioBLE.isATailByte(0xB0),false,"Not a stream packet type",__LINE__);
 
-    // Remember to clean up after yourself
-    testProcessChar_CleanUp();
+  // Remember to clean up after yourself
+  testProcessChar_CleanUp();
 }
 
 void testProcessCharSingleChar() {
-    test.describe("processCharForSingleChar");
+  test.describe("processCharForSingleChar");
 
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset(radioBLE.bufferBLE);
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset(radioBLE.bufferBLE);
 
-    // try to add a char
-    char input = 'A';
-    // Store it to serial buffer
-    radioBLE.bufferSerialAddChar(input);
-    // Get one char and process it
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE,input);
+  // try to add a char
+  char input = 'A';
+  // Store it to serial buffer
+  radioBLE.bufferSerialAddChar(input);
+  // Get one char and process it
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE,input);
 
-    // Verify serial buffer
-    test.assertEqual(radioBLE.bufferSerial.packetBuffer->data[radioBLE.bufferSerial.packetBuffer->positionWrite - 1],input,"Char stored to serial buffer",__LINE__);
-    test.assertEqual(radioBLE.bufferSerial.numberOfPacketsToSend, 1, "Serial buffer has 1 packet to send", __LINE__);
-    test.assertEqual(radioBLE.bufferSerial.numberOfPacketsSent, 0, "Serial buffer not sent any packets", __LINE__);
-    // Verify stream packet buffer
-    test.assertEqual(radioBLE.spBuffer.data[0], input, "Char stored to stream packet buffer", __LINE__);
+  // Verify serial buffer
+  test.assertEqual(radioBLE.bufferSerial.packetBuffer->data[radioBLE.bufferSerial.packetBuffer->positionWrite - 1],input,"Char stored to serial buffer",__LINE__);
+  test.assertEqual(radioBLE.bufferSerial.numberOfPacketsToSend, 1, "Serial buffer has 1 packet to send", __LINE__);
+  test.assertEqual(radioBLE.bufferSerial.numberOfPacketsSent, 0, "Serial buffer not sent any packets", __LINE__);
+  // Verify stream packet buffer
+  test.assertEqual(radioBLE.spBuffer.data[0], input, "Char stored to stream packet buffer", __LINE__);
 
-    // Remember to clean up after yourself
-    testProcessChar_CleanUp();
+  // Remember to clean up after yourself
+  testProcessChar_CleanUp();
 
 }
 
 void testProcessCharStreamPacket() {
-    test.describe("processCharForStreamPacket");
-    test.it("should recognze a stream packet and wait 88us before allowing the stream packet to be sent with stop byte of 0xC0");
+  test.describe("processCharForStreamPacket");
+  test.it("should recognze a stream packet and wait 88us before allowing the stream packet to be sent with stop byte of 0xC0");
 
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset();
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
 
-    // Write a stream packet with end byte 0xC0
-    writeAStreamPacketToAddChar(0xC0);
+  // Write a stream packet with end byte 0xC0
+  writeAStreamPacketToAddChar(0xC0);
 
-    // Right away we want to see if enough time has passed, this should be false
-    //  because we just processed a char, after this test is complete, we should
-    //  be far passed 90uS
-    test.assertBoolean(radioBLE.bufferStreamTimeout(),false,"waiting...",__LINE__);
+  // Right away we want to see if enough time has passed, this should be false
+  //  because we just processed a char, after this test is complete, we should
+  //  be far passed 90uS
+  test.assertBoolean(radioBLE.bufferStreamTimeout(),false,"waiting...",__LINE__);
 
-    // Do we have a stream packet waiting to launch?
-    test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready with 0xC0",__LINE__);
+  // Do we have a stream packet waiting to launch?
+  test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready with 0xC0",__LINE__);
 
-    // This should return true this time
-    test.assertBoolean(radioBLE.bufferStreamTimeout(),true,"able to send",__LINE__);
+  // This should return true this time
+  test.assertBoolean(radioBLE.bufferStreamTimeout(),true,"able to send",__LINE__);
 
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    // Try a stream packet with another stop byte /////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    test.it("should recognze a stream packet and wait 88us before allowing the stream packet to be sent with stop byte of 0xC5");
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  // Try a stream packet with another stop byte /////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  test.it("should recognze a stream packet and wait 88us before allowing the stream packet to be sent with stop byte of 0xC5");
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
 
-    // Write a stream packet with end byte not 0xC0
-    writeAStreamPacketToAddChar(0xC5);
+  // Write a stream packet with end byte not 0xC0
+  writeAStreamPacketToAddChar(0xC5);
 
-    // Right away we want to see if enough time has passed, this should be false
-    //  because we just processed a char, after this test is complete, we should
-    //  be far passed 90uS
-    test.assertBoolean(radioBLE.bufferStreamTimeout(),false,"Type 5 waiting",__LINE__);
+  // Right away we want to see if enough time has passed, this should be false
+  //  because we just processed a char, after this test is complete, we should
+  //  be far passed 90uS
+  test.assertBoolean(radioBLE.bufferStreamTimeout(),false,"Type 5 waiting",__LINE__);
 
-    // Do we have a stream packet waiting to launch?
-    test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready with 0xC5",__LINE__);
+  // Do we have a stream packet waiting to launch?
+  test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready with 0xC5",__LINE__);
 
-    // This should return true this time
-    test.assertBoolean(radioBLE.bufferStreamTimeout(),true,"Type 5 ready",__LINE__);
+  // This should return true this time
+  test.assertBoolean(radioBLE.bufferStreamTimeout(),true,"Type 5 ready",__LINE__);
 
-    // Remember to clean up after yourself
-    testProcessChar_CleanUp();
+  // Remember to clean up after yourself
+  testProcessChar_CleanUp();
 
 }
 
 // Send stream packets, one after the other
 void testProcessCharStreamPackets() {
-    test.describe("processCharForStreamPackets");
+  test.describe("processCharForStreamPackets");
 
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset();
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
 
-    int numberOfTrials = 9;
-    // char testMessage[] = "Sent 0";
-    // unsigned long t1, t2;
+  int numberOfTrials = 9;
+  // char testMessage[] = "Sent 0";
+  // unsigned long t1, t2;
 
-    for (int i = 0; i < numberOfTrials; i++) {
-        // Write a stream packet with end byte 0xC0
-        writeAStreamPacketToAddChar(0xC0);
-        radioBLE.lastTimeSerialRead = micros();
-        // Stream packet should be waiting
-        test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready",__LINE__);
-        // Wait
-        while(!radioBLE.bufferStreamTimeout()) {};
-        // configure the test message
-        // testMessage[5] = (i + 1) + '0';
-        // Send the stream packet
-        if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
-          RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET);
-        }
-        radioBLE.bufferStreamReset();
-        // test.assertBoolean(radioBLE.bufferStreamSendToHost(radioBLE.streamPacketBuffer),true,testMessage);
+  for (int i = 0; i < numberOfTrials; i++) {
+    // Write a stream packet with end byte 0xC0
+    writeAStreamPacketToAddChar(0xC0);
+    radioBLE.lastTimeSerialRead = micros();
+    // Stream packet should be waiting
+    test.assertEqualHex(radioBLE.spBuffer.state,radioBLE.STREAM_STATE_READY,"state ready",__LINE__);
+    // Wait
+    while(!radioBLE.bufferStreamTimeout()) {};
+    // configure the test message
+    // testMessage[5] = (i + 1) + '0';
+    // Send the stream packet
+    if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
+      RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET);
     }
+    radioBLE.bufferStreamReset();
+    // test.assertBoolean(radioBLE.bufferStreamSendToHost(radioBLE.streamPacketBuffer),true,testMessage);
+  }
 }
 
 // Test conditions that result in a stream packet not being launched
@@ -557,40 +556,42 @@ void testProcessCharNotStreamPacket() {
 
 // Put the system in an overflow condition
 void testProcessCharOverflow() {
-    test.describe("testProcessCharOverflow");
+  test.describe("testProcessCharOverflow");
 
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset();
-    // Write the max number of bytes in buffers
-    int maxBytes = OPENBCI_NUMBER_SERIAL_BUFFERS * BYTES_PER_BLE_PACKET;
-    // Write max bytes but stop 1 before
-    for (int i = 0; i < maxBytes - 1; i++) {
-        radioBLE.bufferSerialAddChar(0x00);
-    }
-
-    // Verify that the emergency stop flag has NOT been deployed
-    test.assertFalse(radioBLE.bufferSerial.overflowed, "Overflow emergency not hit", __LINE__);
-    // Verify that there are 15 buffers filled
-    test.assertEqualHex(radioBLE.bufferSerial.numberOfPacketsToSend, OPENBCI_NUMBER_SERIAL_BUFFERS,"15 buffers",__LINE__);
-    // Verify the write position
-    test.assertEqualHex((radioBLE.bufferSerial.packetBuffer + OPENBCI_NUMBER_SERIAL_BUFFERS - 1)->positionWrite, BYTES_PER_BLE_PACKET, "20 bytes in buffer", __LINE__);
-
-    // Write one more byte to overflow the buffer
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
+  // Write the max number of bytes in buffers
+  int maxBytes = (OPENBCI_NUMBER_SERIAL_BUFFERS - 1) * (BYTES_PER_BLE_PACKET - 1);
+  // Write max bytes but stop 1 before
+  for (int i = 0; i < maxBytes; i++) {
+    // Serial.printf("i: %d ", i);
     radioBLE.bufferSerialAddChar(0x00);
-    // Verify that the emergency stop flag has been deployed
-    test.assertTrue(radioBLE.bufferSerial.overflowed, "Overflow emergency", __LINE__);
+  }
 
-    // Remember to clean up after yourself
-    testProcessChar_CleanUp();
+  // Verify that the emergency stop flag has NOT been deployed
+  test.assertFalse(radioBLE.bufferSerial.overflowed, "Overflow emergency not hit", __LINE__);
+  // Verify that there are 15 buffers filled
+  test.assertEqual(radioBLE.bufferSerial.numberOfPacketsToSend, (int)(OPENBCI_NUMBER_SERIAL_BUFFERS - 1), "15 buffers", __LINE__);
+  // Verify the write position
+  test.assertEqual(radioBLE.currentPacketBufferSerial->positionWrite, BYTES_PER_BLE_PACKET, "20 bytes in buffer", __LINE__);
+
+  // Write one more byte to overflow the buffer
+  // Serial.printf("maxBytes: %d\n", maxBytes);
+  radioBLE.bufferSerialAddChar(0x00);
+  // Verify that the emergency stop flag has been deployed
+  test.assertTrue(radioBLE.bufferSerial.overflowed, "Overflow emergency", __LINE__);
+
+  // Remember to clean up after yourself
+  testProcessChar_CleanUp();
 }
 
 void testProcessChar_CleanUp() {
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset();
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
 }
 
 /********************************************/
@@ -599,74 +600,74 @@ void testProcessChar_CleanUp() {
 /********************************************/
 /********************************************/
 void testProcessRadioChar() {
-    testPacketToSend();
+  testPacketToSend();
 }
 
 // This is used to determine if there is in fact a packet waiting to be sent
 void testPacketToSend() {
-    test.describe("testPacketToSend");
-    // Clear the buffers
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    radioBLE.bufferStreamReset();
-    radioBLE.bufferBLEReset();
-    // Set the buffers up to think there is a packet to be sent
-    //  by triggering a serial read
-    char input = 'A';
-    // Set last serial read to now
-    radioBLE.lastTimeSerialRead = micros();
-    // Process that char!
-    radioBLE.bufferSerialAddChar(input);
-    // Less than 3ms has passed, veryify we can't send a packet
-    test.assertBoolean(radioBLE.packetToSend(),false,"Can't send packet yet",__LINE__);
-    // Wait for 3 ms
-    delayMicroseconds(3000);
-    // Re ask if there is something to send
-    test.assertBoolean(radioBLE.packetToSend(),true,"Enough time passed",__LINE__);
+  test.describe("testPacketToSend");
+  // Clear the buffers
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset();
+  // Set the buffers up to think there is a packet to be sent
+  //  by triggering a serial read
+  char input = 'A';
+  // Set last serial read to now
+  radioBLE.lastTimeSerialRead = micros();
+  // Process that char!
+  radioBLE.bufferSerialAddChar(input);
+  // Less than 3ms has passed, veryify we can't send a packet
+  test.assertBoolean(radioBLE.packetToSend(),false,"Can't send packet yet",__LINE__);
+  // Wait for 3 ms
+  delayMicroseconds(3000);
+  // Re ask if there is something to send
+  test.assertBoolean(radioBLE.packetToSend(),true,"Enough time passed",__LINE__);
 
 }
 
 void testByteIdMakeStreamPacketType() {
-    test.describe("byteIdMakeStreamPacketType");
+  test.describe("byteIdMakeStreamPacketType");
 
-    test.assertEqual(radioBLE.byteIdMakeStreamPacketType(0xC5),5,"Can get type 5",__LINE__);
+  test.assertEqual(radioBLE.byteIdMakeStreamPacketType(0xC5),5,"Can get type 5",__LINE__);
 
-    testProcessChar_CleanUp();
+  testProcessChar_CleanUp();
 }
 
 void writeAStreamPacketToAddChar(char endByte) {
-    // Quickly write a bunch of bytes into the buffers
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x41); // make the first one a stream one so 0x41
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x00); // Sample number what have you
+  // Quickly write a bunch of bytes into the buffers
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x41); // make the first one a stream one so 0x41
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, 0x00); // Sample number what have you
 
-    for (byte i = 0; i < 8; i++) {
-        bufferStreamAdd3Byte(i);
-    }
-    // 5 bytes - channel 1
-    // 8 bytes - channel 2
-    // 11 bytes - channel 3
-    // 14 bytes - channel 4
-    // 17 bytes - channel 5
-    // 20 bytes - channel 6
-    // 23 bytes - channel 7
-    // 26 bytes - channel 8
+  for (byte i = 0; i < 8; i++) {
+    bufferStreamAdd3Byte(i);
+  }
+  // 5 bytes - channel 1
+  // 8 bytes - channel 2
+  // 11 bytes - channel 3
+  // 14 bytes - channel 4
+  // 17 bytes - channel 5
+  // 20 bytes - channel 6
+  // 23 bytes - channel 7
+  // 26 bytes - channel 8
 
-    for (byte i = 0; i < 3; i++) {
-        bufferStreamAdd2Byte(i);
-    }
-    // 28 bytes - Aux 1
-    // 30 bytes - Aux 2
-    // 32 bytes - Aux 3
+  for (byte i = 0; i < 3; i++) {
+      bufferStreamAdd2Byte(i);
+  }
+  // 28 bytes - Aux 1
+  // 30 bytes - Aux 2
+  // 32 bytes - Aux 3
 
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, endByte); // This locks in the final stream packet
-    radioBLE.lastTimeSerialRead = micros();
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, endByte); // This locks in the final stream packet
+  radioBLE.lastTimeSerialRead = micros();
 }
 
 void bufferStreamAdd3Byte(byte n) {
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)n);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)n);
 }
 void bufferStreamAdd2Byte(byte n) {
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
-    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)n);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)0x00);
+  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE, (char)n);
 }
