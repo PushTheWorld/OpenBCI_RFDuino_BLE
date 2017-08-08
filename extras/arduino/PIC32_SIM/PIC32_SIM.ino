@@ -22,7 +22,7 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
-  if (millis() > (lastTimePacketSent + 4)) {
+  if (millis() > (lastTimePacketSent + 500)) {
     output[1] = counter++;
     for (int i = 0; i < 33; i++) {
       Serial.write(output[i]);

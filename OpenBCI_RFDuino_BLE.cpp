@@ -83,6 +83,8 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
   tail = 0;
 
   bufferBLEReset();
+  bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  bufferStreamReset();
   configureDevice(); // setup for Device
 }
 
@@ -699,7 +701,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
 
   switch (spBuffer.state) {
     case STREAM_STATE_TAIL:
-      // Serial.println(" tail");
+      Serial.println(" tail");
       // Is the current char equal to 0xCX where X is 0-F?
       if (isATailByte(newChar)) {
         // Set the type byte
@@ -707,6 +709,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         // Change the state to ready
         spBuffer.state = STREAM_STATE_READY;
         if (blePacket->state == STREAM_STATE_GOT_ALL_PACKETS) {
+          Serial.println("ble packet ready");
           blePacket->state = STREAM_STATE_READY;
           blePacket->data[0] = newChar;
         }
@@ -750,7 +753,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
         blePacket->data[blePacket->bytesIn] = newChar;
         blePacket->bytesIn++;
         if (blePacket->bytesIn > POSITION_ACCEL_BYTE) {
-          // Serial.println("Got all packets");
+          Serial.println("Got all packets");
           blePacket->state = STREAM_STATE_GOT_ALL_PACKETS;
         }
       // } else {
@@ -776,7 +779,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       // Set bytes in to 0
       spBuffer.bytesIn = 0;
       if (!bufferStreamTimeout()) {
-        // Serial.println("fuck ya");
+        Serial.println("fuck ya");
         // if the stream packet buffer did not timeout, then this is not a
         //  stream packet.
         blePacket->state = STREAM_STATE_INIT;
@@ -789,7 +792,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
     case STREAM_STATE_INIT:
       // Serial.println(" init");
       if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
-        // Serial.println(" head");
+        Serial.println(" head");
         // Move the state
         spBuffer.state = STREAM_STATE_STORING;
         blePacket->state = STREAM_STATE_STORING;
