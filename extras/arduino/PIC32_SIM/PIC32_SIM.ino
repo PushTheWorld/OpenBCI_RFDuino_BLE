@@ -5,29 +5,40 @@
  This example code is in the public domain.
  */
 
+#define SAMPLE_RATE_HZ 10
+#define INTERPACKET_SEND_INTERVAL_MS 1000/SAMPLE_RATE_HZ
 unsigned long lastTimePacketSent = 0;
-char output[] = "pushtheworldajkellerpushtheworld!";
 
 uint8_t counter = 0;
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(115200);
-
-  output[0] = 0x41;
-  output[2] = 0; output[3] = 0; output[4] = 0;
-  output[5] = 0; output[6] = 0; output[7] = 0;
-  output[32] = 0xC0;
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-  if (millis() > (lastTimePacketSent + 500)) {
-    output[1] = counter++;
-    for (int i = 0; i < 33; i++) {
-      Serial.write(output[i]);
-    }
-    // Serial.write((const char *)output, 33);
-   lastTimePacketSent = millis();
+  if (millis() > (lastTimePacketSent + INTERPACKET_SEND_INTERVAL_MS)) {
+    serialWriteAStreamPacket(counter++);
+    lastTimePacketSent = millis();
   }
+}
+
+void serialWriteAStreamPacket(uint8_t sampleNumber) {
+
+  Serial.write(0x41);
+  Serial.write(sampleNumber);
+  Serial.write(0); Serial.write(0); Serial.write(0);
+  Serial.write(0); Serial.write(0); Serial.write(1);
+  Serial.write(0); Serial.write(0); Serial.write(2);
+  Serial.write(0); Serial.write(0); Serial.write(3);
+  Serial.write(0); Serial.write(0); Serial.write(4);
+  Serial.write(0); Serial.write(0); Serial.write(5);
+  Serial.write(0); Serial.write(0); Serial.write(6);
+  Serial.write(0); Serial.write(0); Serial.write(7);
+  Serial.write(0); Serial.write(0);
+  Serial.write(0); Serial.write(1);
+  Serial.write(0); Serial.write(2);
+  Serial.write(0xC0);
+  // 4101000001000001000001000001000001000001000001000001000100010001C0
 }

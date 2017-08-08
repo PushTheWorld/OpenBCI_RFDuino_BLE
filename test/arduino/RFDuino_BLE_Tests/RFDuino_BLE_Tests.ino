@@ -389,6 +389,7 @@ void testProcessChar() {
   testProcessCharSingleChar();
   testProcessCharStreamPacket();
   testProcessCharStreamPackets();
+  testProcessCharStreamReal();
   testProcessCharNotStreamPacket();
   testProcessCharOverflow();
 }
@@ -484,6 +485,73 @@ void testProcessCharStreamPacket() {
   // Remember to clean up after yourself
   testProcessChar_CleanUp();
 
+}
+
+void getMeAStreamPacket(uint8_t *output) {
+  output[0] = 0x41;
+  output[1] = sampleNumber;
+  output[2] = 0; output[3] = 0; output[4] = 0;
+  output[5] = 0; output[6] = 0; output[7] = 1;
+  output[8] = 0; output[9] = 0; output[10] = 2;
+  output[11] = 0; output[12] = 0; output[13] = 3;
+  output[14] = 0; output[15] = 0; output[16] = 4;
+  output[17] = 0; output[18] = 0; output[19] = 5;
+  output[20] = 0; output[21] = 0; output[22] = 6;
+  output[23] = 0; output[24] = 0; output[25] = 7;
+  output[26] = 0; output[27] = 0;
+  output[28] = 0; output[29] = 1;
+  output[30] = 0; output[31] = 2;
+  output[32] = 0xC0;
+}
+
+void testProcessCharStreamReal() {
+  test.detail("Process Real Stream");
+  radioBLE.bufferStreamReset();
+  radioBLE.bufferBLEReset(radioBLE.bufferBLE);
+  radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+
+  boolean run = true;
+  uint8_t maxSize = 33;
+  uint8_t streamPacket[33];
+  getMeAStreamPacket(streamPacket);
+  uint8_t packetPosition = 0;
+  uint8_t numPacket = 0;
+  uint8_t maxPackets = 5;
+  uint8_t packetsSent = 0;
+  unsigned long now = millis()();
+  unsigned long testTimeLimit = 500;
+  while (run) {
+    if (millis() > testTimeLimit+now) {
+      run = false;
+      test.assertTrue(false, "timeout - not able to produce a ble packet", __LINE__);
+    } else {
+      if (packetPosition < 33) {
+        radioBLE.bufferSerialAddChar(output[packetPosition]);
+        radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, output[packetPosition]);
+        radioBLE.lastTimeSerialRead = micros();
+        delayMicroseconds(88); // OPENBCI_TIMEOUT_PACKET_STREAM_uS
+      }
+
+      if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
+        radioBLE.bufferBLEHeadMove();
+      }
+
+      if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?
+        packetsSent++;
+        if (packetsSent >= maxPackets) {
+          run = false;
+          test.assertTrue(true, "should have sent all five packets");
+        }
+      }
+
+      packetPosition++;
+      if (packetPosition > 32 && packetPosition < 40) {
+        delayMicroseconds(100);
+      } else if (packetPosition > 40) {
+        packetPosition = 0;        
+      }
+    }
+  }
 }
 
 // Send stream packets, one after the other
