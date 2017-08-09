@@ -1,3 +1,7 @@
+# v0.1.0
+
+New Library
+
 # v0.0.1
 
-Intial Release
+Initial Release

@@ -489,7 +489,7 @@ void testProcessCharStreamPacket() {
 
 void getMeAStreamPacket(uint8_t *output) {
   output[0] = 0x41;
-  output[1] = sampleNumber;
+  output[1] = 0;
   output[2] = 0; output[3] = 0; output[4] = 0;
   output[5] = 0; output[6] = 0; output[7] = 1;
   output[8] = 0; output[9] = 0; output[10] = 2;
@@ -516,18 +516,18 @@ void testProcessCharStreamReal() {
   getMeAStreamPacket(streamPacket);
   uint8_t packetPosition = 0;
   uint8_t numPacket = 0;
-  uint8_t maxPackets = 5;
+  uint8_t maxPackets = 50;
   uint8_t packetsSent = 0;
-  unsigned long now = millis()();
-  unsigned long testTimeLimit = 500;
+  unsigned long now = millis();
+  unsigned long testTimeLimit = 10000;
   while (run) {
     if (millis() > testTimeLimit+now) {
       run = false;
-      test.assertTrue(false, "timeout - not able to produce a ble packet", __LINE__);
+      test.fail("timeout - not able to produce a ble packet", __LINE__);
     } else {
       if (packetPosition < 33) {
-        radioBLE.bufferSerialAddChar(output[packetPosition]);
-        radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, output[packetPosition]);
+        radioBLE.bufferSerialAddChar(streamPacket[packetPosition]);
+        radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, streamPacket[packetPosition]);
         radioBLE.lastTimeSerialRead = micros();
         delayMicroseconds(88); // OPENBCI_TIMEOUT_PACKET_STREAM_uS
       }
@@ -540,15 +540,28 @@ void testProcessCharStreamReal() {
         packetsSent++;
         if (packetsSent >= maxPackets) {
           run = false;
-          test.assertTrue(true, "should have sent all five packets");
+          test.pass("should have sent all packets", __LINE__);
         }
+        // Serial.print("0x");
+        // for (int i = 0; i < 20; i++) {
+        //   if ((radioBLE.bufferBLE + radioBLE.tail)->data[i] < 10) {
+        //     Serial.print("0");
+        //   }
+        //   Serial.print((radioBLE.bufferBLE + radioBLE.tail)->data[i], HEX);
+        // }
+        // Serial.println();
+        // Serial.write((radioBLE.bufferBLE + radioBLE.tail)->data, 20);Serial.println();
+        radioBLE.bufferBLETailMove();
+        // Serial.println("tail moved");
+
       }
 
       packetPosition++;
-      if (packetPosition > 32 && packetPosition < 40) {
+      if (packetPosition > 32 && packetPosition < 35) {
         delayMicroseconds(100);
       } else if (packetPosition > 40) {
-        packetPosition = 0;        
+        packetPosition = 0;
+        streamPacket[1] += 1;
       }
     }
   }
