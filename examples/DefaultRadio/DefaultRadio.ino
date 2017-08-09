@@ -35,7 +35,7 @@ void setup() {
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  radioBLE.beginDebug(123456);
+  radioBLE.begin(123456);
   // Serial.println("helllo");
   // delay(100);
 

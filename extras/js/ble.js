@@ -97,7 +97,7 @@ noble.on('discover', function(peripheral) {
 
             connected = true;
 
-            var crust = new Buffer("b");
+            var crust = new Buffer("v");
             writeTwoCharacteristic.write(crust, false, function(err) {
               if (err) console.error(err);
               else console.log('wrote writeTwoCharacteristic');
