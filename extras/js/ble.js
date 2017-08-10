@@ -90,22 +90,31 @@ noble.on('discover', function(peripheral) {
             //
             rfduinoSubscribeCharacteristic.on('read', (data) => {
               // TODO: handle all the data, both streaming and not
-              console.log(`${data[0]} head: ${data[1]} tail: ${data[2]}`);
+              console.log(`${data[1]}`);
               // processBytes(data);
             });
             rfduinoSubscribeCharacteristic.notify(true);
 
             connected = true;
 
-            var crust = new Buffer("v");
-            writeTwoCharacteristic.write(crust, false, function(err) {
-              if (err) console.error(err);
-              else console.log('wrote writeTwoCharacteristic');
-            });
+            var crust = Buffer.from("b");
             writeOneCharacteristic.write(crust, false, function(err) {
               if (err) console.error(err);
               else console.log('wrote writeOneCharacteristic');
             });
+
+            setTimeout(() => {
+              console.log("stopping stream");
+              crust = Buffer.from("s");
+              writeOneCharacteristic.write(crust, false, function(err) {
+                if (err) console.error(err);
+                else console.log('wrote writeOneCharacteristic');
+              });
+              setTimeout(() => {
+                console.log('exit');
+                process.exit(0);
+              }, 100);
+            }, 3000);
 
           }
           else {

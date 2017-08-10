@@ -24,7 +24,7 @@ void serialEvent(void){
   // Serial.print("0x");
   // if (newChar < 10) Serial.print("0");
   // Serial.println(newChar,HEX);
-  radioBLE.bufferSerialAddChar(newChar);
+  // radioBLE.bufferSerialAddChar(newChar);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
@@ -35,17 +35,21 @@ void setup() {
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  radioBLE.begin(123456);
+  radioBLE.beginDebug(123456);
   // Serial.println("helllo");
   // delay(100);
 
   RFduinoBLE.advertisementData = "OBCI";
-  Serial.println("Waiting for connection...");
+  // Serial.println("Waiting for connection...");
   RFduinoBLE.begin();
 
 }
 
 void loop() {
+
+  // if ((radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY || radioBLE.bufferBLEHeadReadyToMove()) && radioBLE.bufferStreamTimeout()) {
+  //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  // }
 
   // First we must ask if an emergency stop flag has been triggered, as a Device
   //  we must frequently ask this question as we are the only one that can
@@ -69,7 +73,6 @@ void loop() {
     // }
   } else {
     if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
-
       radioBLE.bufferBLEHeadMove();
     }
 
@@ -103,7 +106,7 @@ void loop() {
  */
 void RFduinoBLE_onConnect() {
   radioBLE.connectedDevice = true;
-  Serial.println("Connected");
+  // Serial.println("Connected");
   // first send is not possible until the iPhone completes service/characteristic discovery
 }
 
@@ -113,7 +116,7 @@ void RFduinoBLE_onConnect() {
  */
 void RFduinoBLE_onDisconnect() {
   radioBLE.connectedDevice = false;
-  Serial.println("Disconnected");
+  // Serial.println("Disconnected");
   // first send is not possible until the iPhone completes service/characteristic discovery
 }
 

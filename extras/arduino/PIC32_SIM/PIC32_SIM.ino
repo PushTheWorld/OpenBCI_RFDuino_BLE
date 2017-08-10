@@ -5,9 +5,10 @@
  This example code is in the public domain.
  */
 
-#define SAMPLE_RATE_HZ 10
+#define SAMPLE_RATE_HZ 250
 #define INTERPACKET_SEND_INTERVAL_MS 1000/SAMPLE_RATE_HZ
 unsigned long lastTimePacketSent = 0;
+boolean streaming = false;
 
 uint8_t counter = 0;
 // the setup routine runs once when you press reset:
@@ -18,14 +19,26 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
-  if (millis() > (lastTimePacketSent + INTERPACKET_SEND_INTERVAL_MS)) {
+  if (streaming && millis() > (lastTimePacketSent + INTERPACKET_SEND_INTERVAL_MS)) {
     serialWriteAStreamPacket(counter++);
     lastTimePacketSent = millis();
+  }
+  if (Serial.available()) {
+    char newChar = Serial.read();
+    switch (newChar) {
+      case 'b':
+        streaming = true;
+        break;
+      case 's':
+        streaming = false;
+        break;
+      default:
+        break;
+    }
   }
 }
 
 void serialWriteAStreamPacket(uint8_t sampleNumber) {
-
   Serial.write(0x41);
   Serial.write(sampleNumber);
   Serial.write(0); Serial.write(0); Serial.write(0);

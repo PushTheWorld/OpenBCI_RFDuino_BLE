@@ -29,7 +29,7 @@
 #define BYTES_PER_CHANNEL 3
 #define POSITION_ACCEL_BYTE 19
 #define BYTES_PER_ACCEL 6
-#define NUM_BLE_PACKETS 30
+#define NUM_BLE_PACKETS 50
 #define BYTES_PER_BLE_PACKET 20
 
 // Stream byte stuff
@@ -37,12 +37,11 @@
 #define OPENBCI_STREAM_BYTE_STOP 0xC0
 
 // Max buffer lengths
-#define OPENBCI_BUFFER_LENGTH_MULTI 528 // 16 * 33
+#define OPENBCI_BUFFER_LENGTH_MULTI 200 // 16 * 33
 
 // Number of buffers
 #define OPENBCI_NUMBER_RADIO_BUFFERS 1
 #define OPENBCI_NUMBER_SERIAL_BUFFERS 10
-#define OPENBCI_NUMBER_STREAM_BUFFERS 25 // This should be at least one greater than poll time divided by packet interval to allow for the ack counter.
 
 // These are the three different possible configuration modes for this library
 #define OPENBCI_MODE_DEVICE 0
