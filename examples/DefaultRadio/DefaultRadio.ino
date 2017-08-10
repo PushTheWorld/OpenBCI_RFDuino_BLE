@@ -24,7 +24,10 @@ void serialEvent(void){
   // Serial.print("0x");
   // if (newChar < 10) Serial.print("0");
   // Serial.println(newChar,HEX);
-  // radioBLE.bufferSerialAddChar(newChar);
+  if (radioBLE.bufferStreamTimeout() && radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY && radioBLE.bufferSerialHasData()) {
+    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  }
+  radioBLE.bufferSerialAddChar(newChar);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
@@ -77,10 +80,15 @@ void loop() {
     }
 
     if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?
+      radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
       radioBLE.bufferBLETailSend();
     }
 
-    if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to Host
+    if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to connected device?
+      if (radioBLE.bufferStreamTimeout() && (radioBLE.bufferBLE + radioBLE.head)->bytesIn > 7  && radioBLE.bufferSerialHasData()) {
+        radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+        return;
+      }
       // Has 3ms passed since the last time the serial port was read. Only the
       //  first packet get's sent from here
       if (radioBLE.bufferSerialTimeout() && radioBLE.bufferSerial.numberOfPacketsSent == 0 ) {

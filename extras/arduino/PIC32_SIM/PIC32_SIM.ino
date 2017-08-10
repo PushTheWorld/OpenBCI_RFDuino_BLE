@@ -32,6 +32,9 @@ void loop() {
       case 's':
         streaming = false;
         break;
+      case 'v':
+        softReset();
+        break;
       default:
         break;
     }
@@ -54,4 +57,11 @@ void serialWriteAStreamPacket(uint8_t sampleNumber) {
   Serial.write(0); Serial.write(2);
   Serial.write(0xC0);
   // 4101000001000001000001000001000001000001000001000001000100010001C0
+}
+
+void softReset() {
+  Serial.println("OpenBCI V3 8-16 channel");
+  Serial.println("On Board ADS1299 Device ID: 0x3E");
+  Serial.println("LIS3DH Device ID: 0xA0");
+  Serial.println("Firmware: v3.0.0");
 }
