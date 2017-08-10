@@ -27,20 +27,16 @@ void serialEvent(void){
   if (radioBLE.bufferStreamTimeout() && radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY && radioBLE.bufferSerialHasData()) {
     radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
   }
-  radioBLE.bufferSerialAddChar(newChar);
+  // radioBLE.bufferSerialAddChar(newChar);
   radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
   radioBLE.lastTimeSerialRead = micros();
 }
 
 void setup() {
-  // override_uart_limit = true;
-  // Serial.begin(115200);
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  radioBLE.beginDebug(123456);
-  // Serial.println("helllo");
-  // delay(100);
+  radioBLE.begin(123456);
 
   RFduinoBLE.advertisementData = "OBCI";
   // Serial.println("Waiting for connection...");
