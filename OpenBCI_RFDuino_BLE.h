@@ -76,6 +76,7 @@ public:
   OpenBCI_RFDuino_BLE_Class();
   void        begin();
   void        begin(uint32_t);
+  void        beginDebug();
   void        beginDebug(uint32_t);
   void        bufferAddTimeSyncSentAck(void);
   void        bufferBLEHeadMove(void);

@@ -15,20 +15,16 @@
 #include <RFduinoBLE.h>
 #include "OpenBCI_RFDuino_BLE.h"
 uint8_t buffer[BYTES_PER_BLE_PACKET];
+char tinyBuffer[BYTES_PER_TINY_BUF];
+volatile uint8_t tinyBufHead = 0;
+volatile uint8_t tinyBufTail = 0;
 uint8_t bufferPos = 0;
+
 void serialEvent(void){
   // Get one char and process it
-  // Mark the last serial as now;
   // Store it to serial buffer
-  char newChar = Serial.read();
-  // Serial.print("0x");
-  // if (newChar < 10) Serial.print("0");
-  // Serial.println(newChar,HEX);
-  if (radioBLE.bufferStreamTimeout() && radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY && radioBLE.bufferSerialHasData()) {
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-  }
-  // radioBLE.bufferSerialAddChar(newChar);
-  radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, newChar);
+  tinyBuffer[tinyBufHead++] = Serial.read();
+  if (tinyBufHead > BYTES_PER_TINY_BUF) tinyBufHead = 0;
   radioBLE.lastTimeSerialRead = micros();
 }
 
@@ -36,7 +32,7 @@ void setup() {
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  radioBLE.begin(123456);
+  radioBLE.beginDebug(123456);
 
   RFduinoBLE.advertisementData = "OBCI";
   // Serial.println("Waiting for connection...");
@@ -49,6 +45,18 @@ void loop() {
   // if ((radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY || radioBLE.bufferBLEHeadReadyToMove()) && radioBLE.bufferStreamTimeout()) {
   //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
   // }
+
+  while (tinyBufHead != tinyBufTail) {
+    Serial.print("h: "); Serial.print(tinyBufHead); Serial.print(" t: "); Serial.println(tinyBufTail);
+    // if (radioBLE.bufferStreamTimeout() && radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY && radioBLE.bufferSerialHasData()) {
+    //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+    // }
+    // radioBLE.bufferSerialAddChar(newChar);
+    radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, tinyBuffer[tinyBufTail++]);
+
+    if (tinyBufTail > BYTES_PER_TINY_BUF) tinyBufTail = 0;
+
+  }
 
   // First we must ask if an emergency stop flag has been triggered, as a Device
   //  we must frequently ask this question as we are the only one that can
