@@ -24,7 +24,8 @@ void serialEvent(void){
   // Get one char and process it
   // Store it to serial buffer
   tinyBuffer[tinyBufHead++] = Serial.read();
-  if (tinyBufHead > BYTES_PER_TINY_BUF) tinyBufHead = 0;
+  if (tinyBufHead >= BYTES_PER_TINY_BUF) tinyBufHead = 0;
+
   radioBLE.lastTimeSerialRead = micros();
 }
 
@@ -46,15 +47,16 @@ void loop() {
   //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
   // }
 
-  while (tinyBufHead != tinyBufTail) {
-    Serial.print("h: "); Serial.print(tinyBufHead); Serial.print(" t: "); Serial.println(tinyBufTail);
+  if (tinyBufHead != tinyBufTail) {
+//    Serial.println(tinyBuffer[tinyBufTail]);
+    // Serial.print("h: "); Serial.print(tinyBufHead); Serial.print(" t: "); Serial.println(tinyBufTail);
     // if (radioBLE.bufferStreamTimeout() && radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY && radioBLE.bufferSerialHasData()) {
     //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
     // }
     // radioBLE.bufferSerialAddChar(newChar);
     radioBLE.bufferStreamAddChar(radioBLE.bufferBLE + radioBLE.head, tinyBuffer[tinyBufTail++]);
 
-    if (tinyBufTail > BYTES_PER_TINY_BUF) tinyBufTail = 0;
+    if (tinyBufTail >= BYTES_PER_TINY_BUF) tinyBufTail = 0;
 
   }
 
@@ -81,6 +83,7 @@ void loop() {
   } else {
     if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
       radioBLE.bufferBLEHeadMove();
+      // Serial.println("moved head");
     }
 
     if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?

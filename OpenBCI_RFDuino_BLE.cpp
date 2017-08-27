@@ -329,10 +329,10 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
   int lastTail = tail;
   bufferBLETailMove();
   // This will simply add to the tx buffer
-  RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
+  // RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
   // This will wait for the TX buffers to clear
-  // while (! RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET))
-    // ;  // all tx buffers in use (can't send - try again later)
+  while (! RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET))
+    ;  // all tx buffers in use (can't send - try again later)
 }
 
 boolean OpenBCI_RFDuino_BLE_Class::bufferBLETailReadyToSend(void) {
@@ -779,15 +779,15 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char n
       spBuffer.state = STREAM_STATE_INIT;
       // Set bytes in to 0
       spBuffer.bytesIn = 0;
-      if (!bufferStreamTimeout()) {
-        // if the stream packet buffer did not timeout, then this is not a
-        //  stream packet.
-        blePacket->state = STREAM_STATE_INIT;
-        blePacket->bytesIn = 0;
-      } else if (blePacket->bytesIn > 0 && newChar != OPENBCI_STREAM_PACKET_HEAD) {
-        blePacket->state = STREAM_STATE_INIT;
-        blePacket->bytesIn = 0;
-      }
+      // if (!bufferStreamTimeout()) {
+      //   // if the stream packet buffer did not timeout, then this is not a
+      //   //  stream packet.
+      //   blePacket->state = STREAM_STATE_INIT;
+      //   blePacket->bytesIn = 0;
+      // } else if (blePacket->bytesIn > 0 && newChar != OPENBCI_STREAM_PACKET_HEAD) {
+      //   blePacket->state = STREAM_STATE_INIT;
+      //   blePacket->bytesIn = 0;
+      // }
       // break; INTENTIONALLY COMMENTED BREAK OUT FOR TEST OF NEW CHAR AS STREAM
     case STREAM_STATE_INIT:
       // Serial.println(" init");
