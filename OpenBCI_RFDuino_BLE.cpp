@@ -97,7 +97,7 @@ void OpenBCI_RFDuino_BLE_Class::configureDevice(void) {
     pinMode(OPENBCI_PIN_HOST_RESET,INPUT);
     pinMode(OPENBCI_PIN_HOST_LED,OUTPUT);
     digitalWrite(OPENBCI_PIN_HOST_LED,HIGH);
-    Serial.begin(OPENBCI_BAUD_RATE_DEFAULT);
+    Serial.begin(14400);
     // END: To run host as device
   } else {
     // BEGIN: To run host normally
@@ -106,7 +106,7 @@ void OpenBCI_RFDuino_BLE_Class::configureDevice(void) {
     //    rx and tx, where:
     //      rx = GPIO3
     //      tx = GPIO2
-    Serial.begin(OPENBCI_BAUD_RATE_DEFAULT, 3, 2);
+    Serial.begin(115200, 3, 2);
     // END: To run host normally
   }
 }
@@ -325,13 +325,13 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLETailMove(void) {
 void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
   if (!connectedDevice) return;
 
-  // int lastTail = tail;
+  int lastTail = tail;
+  bufferBLETailMove();
   // This will simply add to the tx buffer
   // RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
   // This will wait for the TX buffers to clear
-  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
+  while (! RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET))
     ;  // all tx buffers in use (can't send - try again later)
-  bufferBLETailMove();
 
 }
 
