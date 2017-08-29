@@ -79,6 +79,7 @@ public:
   void        beginDebug();
   void        beginDebug(uint32_t);
   void        bufferAddTimeSyncSentAck(void);
+  void        bufferBLEAddChar(BLEPacket *, char);
   void        bufferBLEHeadMove(void);
   boolean     bufferBLEHeadReadyToMove(void);
   void        bufferBLEReset();
@@ -108,7 +109,6 @@ public:
   void        bufferSerialProcessCommsFailure(void);
   void        bufferSerialReset(uint8_t);
   boolean     bufferSerialTimeout(void);
-  void        bufferStreamAddChar(BLEPacket *, char);
   boolean     bufferStreamAddData(char *);
   void        bufferStreamFlushBuffers(void);
   void        bufferStreamReset(void);

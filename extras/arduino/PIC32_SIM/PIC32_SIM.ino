@@ -41,6 +41,18 @@ void loop() {
   }
 }
 
+void serialWriteABLEPacket(uint8_t sampleNumber) {
+  Serial.write(0xC0);
+  Serial.write(sampleNumber);
+  Serial.write(0); Serial.write(0); Serial.write(1);
+  Serial.write(0); Serial.write(0); Serial.write(2);
+  Serial.write(0); Serial.write(1); Serial.write(1);
+  Serial.write(0); Serial.write(1); Serial.write(2);
+  Serial.write(0); Serial.write(2); Serial.write(1);
+  Serial.write(0); Serial.write(2); Serial.write(2);
+  // 4101000001000001000001000001000001000001000001000001000100010001C0
+}
+
 void serialWriteAStreamPacket(uint8_t sampleNumber) {
   Serial.write(0x41);
   Serial.write(sampleNumber);

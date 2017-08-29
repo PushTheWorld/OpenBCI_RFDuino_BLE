@@ -290,7 +290,6 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLEReset(BLEPacket *blePacket) {
  */
 void OpenBCI_RFDuino_BLE_Class::bufferBLEHeadMove(void) {
   head++;
-  radioBLE.spBuffer.state = STREAM_STATE_INIT;
   if (head > (NUM_BLE_PACKETS - 1)) {
     head = 0;
   }
@@ -326,13 +325,14 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLETailMove(void) {
 void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
   if (!connectedDevice) return;
 
-  int lastTail = tail;
-  bufferBLETailMove();
+  // int lastTail = tail;
   // This will simply add to the tx buffer
   // RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
   // This will wait for the TX buffers to clear
-  while (! RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET))
+  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
     ;  // all tx buffers in use (can't send - try again later)
+  bufferBLETailMove();
+
 }
 
 boolean OpenBCI_RFDuino_BLE_Class::bufferBLETailReadyToSend(void) {
@@ -690,121 +690,49 @@ boolean OpenBCI_RFDuino_BLE_Class::bufferSerialTimeout(void) {
 /**
 * @description Process a char from the serial port on the Device. Enters the char
 *  into the stream state machine.
-* @param `buf` {StreamPacketBuffer *} - The stream packet buffer to add the char to.
+* @param `buf` {BLEPacket *} - The ble buffer to add the char to.
 * @param `newChar` {char} - A new char to process
 * @author AJ Keller (@aj-ptw)
 */
-void OpenBCI_RFDuino_BLE_Class::bufferStreamAddChar(BLEPacket *blePacket, char newChar) {
+void OpenBCI_RFDuino_BLE_Class::bufferBLEAddChar(BLEPacket *blePacket, char newChar) {
   // Process the new char
-  // Serial.print("0x");
+  // Serial.printf("%d 0x", blePacket->bytesIn);
   // if (newChar < 15) Serial.print("0");
-  // Serial.print(newChar, HEX);
+  // Serial.print(newChar, HEX); Serial.println();
 
-  switch (spBuffer.state) {
-    case STREAM_STATE_TAIL:
-      // Serial.println(" tail");
-      // Is the current char equal to 0xCX where X is 0-F?
-      if (isATailByte(newChar)) {
-        // Set the type byte
-        spBuffer.typeByte = newChar;
-        // Change the state to ready
-        spBuffer.state = STREAM_STATE_READY;
-        if (blePacket->state == STREAM_STATE_GOT_ALL_PACKETS) {
-          // Serial.println("ble packet ready");
-          blePacket->state = STREAM_STATE_READY;
-          blePacket->data[0] = newChar;
-        }
-        // Serial.print(33); Serial.print(" state: "); Serial.print("READY-");
-        // Serial.println((streamPacketBuffer + streamPacketBufferHead)->state);
-      } else {
-        // Reset the state machines
-        spBuffer.state = STREAM_STATE_INIT;
-        blePacket->state = STREAM_STATE_INIT;
-        // Set bytes in to 0
-        spBuffer.bytesIn = 0;
-        blePacket->bytesIn = 0;
-
-        // Test to see if this byte is a head byte, maybe if it's not a
-        //  tail byte then that's because a byte was dropped on the way
-        //  over from the Pic.
-        if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
-          // Move the state
-          spBuffer.state = STREAM_STATE_STORING;
-          bufferBLE->state = STREAM_STATE_STORING;
-          // Store to the buffer
-          spBuffer.data[0] = newChar;
-          // Set to 1
-          spBuffer.bytesIn = 1;
-          // Set blePacket bytesIn back to zero
-          blePacket->bytesIn = 0;
-        }
-      }
-      break;
+  switch (blePacket->state) {
     case STREAM_STATE_STORING:
       // Serial.println(" store");
       // Serial.print("storing: 0x");
       // if (newChar < 15) Serial.print("0");
       // Serial.print(newChar, HEX);
-      if (spBuffer.bytesIn == 1 && blePacket->bytesIn == 0) {
-        blePacket->data[1] = newChar;
-        blePacket->bytesIn = 2;
-        // Serial.println(" stored sample number");
-      } else if (spBuffer.bytesIn >= 2 && spBuffer.bytesIn <= 7) {
-        // Serial.printf(" loading: %d | ble->bytesIn: %d\n", spBuffer.bytesIn, blePacket->bytesIn);
-        blePacket->data[blePacket->bytesIn] = newChar;
-        blePacket->bytesIn++;
-        if (blePacket->bytesIn > POSITION_ACCEL_BYTE) {
-          // Serial.println("Got all packets");
-          blePacket->state = STREAM_STATE_GOT_ALL_PACKETS;
-        }
-      // } else {
-        // Serial.println();
+      blePacket->data[blePacket->bytesIn++] = newChar;
+      if (blePacket->bytesIn >= BYTES_PER_BLE_PACKET) {
+        blePacket->state = STREAM_STATE_READY;
       }
-      // Store to the stream packet buffer
-      spBuffer.data[spBuffer.bytesIn] = newChar;
-      // Increment the number of bytes read in
-      spBuffer.bytesIn++;
-
-      if (spBuffer.bytesIn == OPENBCI_MAX_PACKET_SIZE_BYTES) {
-        spBuffer.state = STREAM_STATE_TAIL;
-      }
-
       break;
     // We have called the function before we were able to send the stream
     //  packet which means this is not a stream packet, it's part of a
     //  bigger message
     case STREAM_STATE_READY:
       // Serial.println(" ready");
-      // Got a 34th byte, go back to start
-      spBuffer.state = STREAM_STATE_INIT;
-      // Set bytes in to 0
-      spBuffer.bytesIn = 0;
-      // if (!bufferStreamTimeout()) {
-      //   // if the stream packet buffer did not timeout, then this is not a
-      //   //  stream packet.
-      //   blePacket->state = STREAM_STATE_INIT;
-      //   blePacket->bytesIn = 0;
-      // } else if (blePacket->bytesIn > 0 && newChar != OPENBCI_STREAM_PACKET_HEAD) {
-      //   blePacket->state = STREAM_STATE_INIT;
-      //   blePacket->bytesIn = 0;
-      // }
+      blePacket->state = STREAM_STATE_INIT;
+      blePacket->bytesIn = 0;
       // break; INTENTIONALLY COMMENTED BREAK OUT FOR TEST OF NEW CHAR AS STREAM
     case STREAM_STATE_INIT:
       // Serial.println(" init");
-      if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
+      if (isATailByte(newChar)) {
         // Serial.println(" head");
         // Move the state
-        spBuffer.state = STREAM_STATE_STORING;
         blePacket->state = STREAM_STATE_STORING;
-        // Store to the streamPacketBuffer
-        spBuffer.data[0] = newChar;
+        blePacket->data[0] = newChar;
         // Set to 1
-        spBuffer.bytesIn = 1;
+        blePacket->bytesIn = 1;
       }
       break;
     default:
       // // Reset the state
-      spBuffer.state = STREAM_STATE_INIT;
+      blePacket->state = STREAM_STATE_INIT;
       break;
 
   }
