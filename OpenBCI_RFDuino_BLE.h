@@ -32,7 +32,6 @@ public:
     STREAM_STATE_INIT,
     STREAM_STATE_STORING,
     STREAM_STATE_TAIL,
-    STREAM_STATE_GOT_ALL_PACKETS,
     STREAM_STATE_READY
   };
 
@@ -78,6 +77,8 @@ public:
   void        begin(uint32_t);
   void        beginDebug();
   void        beginDebug(uint32_t);
+  void        beginSerial(void);
+  void        beginSerial(uint32_t);
   void        bufferAddTimeSyncSentAck(void);
   void        bufferBLEAddChar(BLEPacket *, char);
   void        bufferBLEHeadMove(void);

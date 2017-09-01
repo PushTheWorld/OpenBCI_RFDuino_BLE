@@ -88,26 +88,44 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
 * @author AJ Keller (@aj-ptw)
 */
 void OpenBCI_RFDuino_BLE_Class::configureDevice(void) {
-  // Need to override the default baurd rate limit of 9600
   override_uart_limit = true;
-
   // Configure pins
   if (debugMode) { // Dongle debug mode
     // BEGIN: To run host as device
     pinMode(OPENBCI_PIN_HOST_RESET,INPUT);
     pinMode(OPENBCI_PIN_HOST_LED,OUTPUT);
     digitalWrite(OPENBCI_PIN_HOST_LED,HIGH);
-    Serial.begin(14400);
     // END: To run host as device
   } else {
     // BEGIN: To run host normally
     pinMode(OPENBCI_PIN_DEVICE_PCG, INPUT); //feel the state of the PIC with this pin
+    // END: To run host normally
+  }
+  beginSerial();
+}
+
+/**
+ * Used to start the serial port with 115200 baud
+ */
+void OpenBCI_RFDuino_BLE_Class::beginSerial(void) {
+  beginSerial(OPENBCI_BAUD_RATE_BLE);
+}
+
+/**
+ * Used to start the serial port with 115200 baud
+ * @param baudRate {uint32_t} - The baud rate to set to.
+ */
+void OpenBCI_RFDuino_BLE_Class::beginSerial(uint32_t baudRate) {
+  if (Serial) Serial.end();
+
+  if (debugMode) {
+    Serial.begin(baudRate);
+  } else {
     // Start the serial connection. On the device we must specify which pins are
     //    rx and tx, where:
     //      rx = GPIO3
     //      tx = GPIO2
-    Serial.begin(115200, 3, 2);
-    // END: To run host normally
+    Serial.begin(baudRate, 3, 2);
   }
 }
 
@@ -325,13 +343,14 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLETailMove(void) {
 void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
   if (!connectedDevice) return;
 
-  int lastTail = tail;
-  bufferBLETailMove();
+  // int lastTail = tail;
+
   // This will simply add to the tx buffer
   // RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
   // This will wait for the TX buffers to clear
-  while (! RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET))
+  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
     ;  // all tx buffers in use (can't send - try again later)
+  bufferBLETailMove();
 
 }
 
@@ -701,6 +720,31 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLEAddChar(BLEPacket *blePacket, char newC
   // Serial.print(newChar, HEX); Serial.println();
 
   switch (blePacket->state) {
+    case STREAM_STATE_TAIL:
+      // Is the current char equal to 0xCX where X is 0-F?
+      if (isATailByte(newChar)) {
+        // Set the type byte
+        blePacket->data[0] = newChar;
+        // Change the state to ready
+        blePacket->state = STREAM_STATE_READY;
+        // Serial.print(33); Serial.print(" state: "); Serial.print("READY-");
+        // Serial.println((streamPacketBuffer + streamPacketBufferHead)->state);
+      } else {
+        // Reset the state machine
+        blePacket->state = STREAM_STATE_INIT;
+        // Set bytes in to 0
+        blePacket->bytesIn = 0;
+        // Test to see if this byte is a head byte, maybe if it's not a
+        //  tail byte then that's because a byte was dropped on the way
+        //  over from the Pic.
+        if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
+          // Move the state
+          blePacket->state = STREAM_STATE_STORING;
+          // Set to 1
+          blePacket->bytesIn = 1;
+        }
+      }
+      break;
     case STREAM_STATE_STORING:
       // Serial.println(" store");
       // Serial.print("storing: 0x");
@@ -708,7 +752,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLEAddChar(BLEPacket *blePacket, char newC
       // Serial.print(newChar, HEX);
       blePacket->data[blePacket->bytesIn++] = newChar;
       if (blePacket->bytesIn >= BYTES_PER_BLE_PACKET) {
-        blePacket->state = STREAM_STATE_READY;
+        blePacket->state = STREAM_STATE_TAIL;
       }
       break;
     // We have called the function before we were able to send the stream
@@ -721,11 +765,10 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLEAddChar(BLEPacket *blePacket, char newC
       // break; INTENTIONALLY COMMENTED BREAK OUT FOR TEST OF NEW CHAR AS STREAM
     case STREAM_STATE_INIT:
       // Serial.println(" init");
-      if (isATailByte(newChar)) {
+      if (newChar == OPENBCI_STREAM_PACKET_HEAD) {
         // Serial.println(" head");
         // Move the state
         blePacket->state = STREAM_STATE_STORING;
-        blePacket->data[0] = newChar;
         // Set to 1
         blePacket->bytesIn = 1;
       }
@@ -733,6 +776,8 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLEAddChar(BLEPacket *blePacket, char newC
     default:
       // // Reset the state
       blePacket->state = STREAM_STATE_INIT;
+      // Set to 0
+      blePacket->bytesIn = 0;
       break;
 
   }
@@ -755,7 +800,7 @@ void OpenBCI_RFDuino_BLE_Class::bufferStreamReset(void) {
 * @author AJ Keller (@aj-ptw)
 */
 boolean OpenBCI_RFDuino_BLE_Class::bufferStreamTimeout(void) {
-  return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_STREAM_uS);
+  return micros() > (lastTimeSerialRead + OPENBCI_TIMEOUT_PACKET_STREAM_uS_9600);
 }
 
 /**

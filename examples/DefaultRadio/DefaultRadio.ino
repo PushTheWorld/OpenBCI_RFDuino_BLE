@@ -34,7 +34,7 @@ void setup() {
   // Declare the secreteKey
   //  set the first time the board powers up OR after a flash of the non-
   //  volatile memory space with a call to `flashNonVolatileMemory`.
-  radioBLE.beginDebug(123456);
+  radioBLE.begin(123456);
 
   RFduinoBLE.advertisementData = "OBCI";
   // Serial.println("Waiting for connection...");
@@ -96,7 +96,7 @@ void loop() {
     }
 
     if (radioBLE.bufferBLETailReadyToSend()) { // Is there a stream packet waiting to get sent to the Host?
-      radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+      // radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
       radioBLE.bufferBLETailSend();
     }
 
@@ -122,6 +122,18 @@ void loop() {
 
   if (bufferPos > 0) {
     uint8_t tempBytesToSend = bufferPos;
+    // if (tempBytesToSend == 1) {
+    //   switch (buffer[0]) {
+    //     case OPENBCI_HOST_CMD_BAUD_DEFAULT: // 0x05
+    //       radioBLE.beginSerial(OPENBCI_BAUD_RATE_DEFAULT);
+    //       bufferPos = 0;
+    //       return;
+    //    case OPENBCI_HOST_CMD_BAUD_BLE: // 0x0B
+    //       radioBLE.beginSerial(OPENBCI_BAUD_RATE_BLE);
+    //       bufferPos = 0;
+    //       return;
+    //   }
+    // }
     for (int i = 0; i < tempBytesToSend; i++) {
       Serial.write(buffer[i]);
     }

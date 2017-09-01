@@ -22,6 +22,7 @@
 
 #define OPENBCI_TIMEOUT_PACKET_NRML_uS 500 // The time to wait before determining a multipart packet is ready to be send
 #define OPENBCI_TIMEOUT_PACKET_STREAM_uS 88 // Slightly longer than it takes to send a serial byte at 115200
+#define OPENBCI_TIMEOUT_PACKET_STREAM_uS_9600 950 // Slightly longer than it takes to send a serial byte at 9600
 #define OPENBCI_TIMEOUT_PACKET_POLL_MS 48 // Poll time out length for sending null packet from device to host
 #define OPENBCI_TIMEOUT_COMMS_MS 270 // Comms failure time out length. Used only by Host.
 
@@ -103,6 +104,7 @@
 #define OPENBCI_HOST_CMD_TIME_PIN_HIGH          0x08
 #define OPENBCI_HOST_CMD_TIME_PIN_LOW           0x09
 #define OPENBCI_HOST_CMD_BAUD_HYPER             0x0A
+#define OPENBCI_HOST_CMD_BAUD_BLE               0x0B
 
 // Raw data packet types/codes
 #define OPENBCI_PACKET_TYPE_RAW_AUX      = 3; // 0011
@@ -112,6 +114,7 @@
 
 // Possible baud rates
 #define OPENBCI_BAUD_RATE_DEFAULT 115200
+#define OPENBCI_BAUD_RATE_BLE 9600
 
 // Private Radio Places
 #define OPENBCI_HOST_PRIVATE_POS_KEY 1
