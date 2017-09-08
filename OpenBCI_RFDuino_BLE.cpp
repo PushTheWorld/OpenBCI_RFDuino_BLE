@@ -88,7 +88,7 @@ void OpenBCI_RFDuino_BLE_Class::configure(uint32_t _secreteKey) {
 * @author AJ Keller (@aj-ptw)
 */
 void OpenBCI_RFDuino_BLE_Class::configureDevice(void) {
-  override_uart_limit = true;
+  // override_uart_limit = true;
   // Configure pins
   if (debugMode) { // Dongle debug mode
     // BEGIN: To run host as device

@@ -30,7 +30,7 @@
 #define BYTES_PER_CHANNEL 3
 #define POSITION_ACCEL_BYTE 19
 #define BYTES_PER_ACCEL 6
-#define NUM_BLE_PACKETS 50
+#define NUM_BLE_PACKETS 10
 #define BYTES_PER_BLE_PACKET 20
 #define BYTES_PER_TINY_BUF 99
 // Stream byte stuff

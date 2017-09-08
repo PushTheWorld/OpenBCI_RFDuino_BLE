@@ -27,7 +27,7 @@ void serialEvent(void){
 
   radioBLE.bufferBLEAddChar(radioBLE.bufferBLE + radioBLE.head, Serial.read());
   // radioBLE.bufferBLEAddChar(radioBLE.bufferBLE, Serial.read());
-  radioBLE.lastTimeSerialRead = micros();
+  // radioBLE.lastTimeSerialRead = micros();
 }
 
 void setup() {
@@ -57,9 +57,15 @@ void loop() {
 //     //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
 //     // }
 //     // radioBLE.bufferSerialAddChar(newChar);
-//     radioBLE.bufferBLEAddChar(radioBLE.bufferBLE + radioBLE.head, Serial.read());
+//     radioBLE.bufferBLEAddChar(radioBLE.bufferBLE, Serial.read());
+//
+//     if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
+//       RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET);
+//       radioBLE.bufferBLEReset(radioBLE.bufferBLE);
+//     }
+//
 //     // radioBLE.bufferBLEAddChar(radioBLE.bufferBLE, Serial.read());
-//     radioBLE.lastTimeSerialRead = micros();
+//     // radioBLE.lastTimeSerialRead = micros();
 //
 //     // if (tinyBufTail >= BYTES_PER_TINY_BUF) tinyBufTail = 0;
 //
@@ -68,28 +74,28 @@ void loop() {
   // First we must ask if an emergency stop flag has been triggered, as a Device
   //  we must frequently ask this question as we are the only one that can
   //  initiaite a communication between back to the Driver.
-  if (radioBLE.bufferSerial.overflowed) {
-    // Clear the buffer holding all serial data.
-    radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-
-    // Reset the stream buffer
-    radioBLE.bufferBLEReset();
-
-    // Send reset message to the board
-    radioBLE.resetPic32();
-
-    // Send emergency message to the host
-    // radioBLE.singleCharMsg[0] = (char)ORPM_DEVICE_SERIAL_OVERFLOW;
-
-    radioBLE.bufferSerial.overflowed = false;
-    // if (RFduinoGZLL.sendToHost(radio.singleCharMsg,1)) {
-    //   radio.bufferSerial.overflowed = false;
-    // }
-  } else {
-    // if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
-      // while (! RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET));  // all tx buffers in use (can't send - try again later)
-      // radioBLE.bufferBLE->state = radioBLE.STREAM_STATE_INIT;
-    // }
+  // if (radioBLE.bufferSerial.overflowed) {
+  //   // Clear the buffer holding all serial data.
+  //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  //
+  //   // Reset the stream buffer
+  //   radioBLE.bufferBLEReset();
+  //
+  //   // Send reset message to the board
+  //   radioBLE.resetPic32();
+  //
+  //   // Send emergency message to the host
+  //   // radioBLE.singleCharMsg[0] = (char)ORPM_DEVICE_SERIAL_OVERFLOW;
+  //
+  //   radioBLE.bufferSerial.overflowed = false;
+  //   // if (RFduinoGZLL.sendToHost(radio.singleCharMsg,1)) {
+  //   //   radio.bufferSerial.overflowed = false;
+  //   // }
+  // } else {
+  //   // if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
+  //     // while (! RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET));  // all tx buffers in use (can't send - try again later)
+  //     // radioBLE.bufferBLE->state = radioBLE.STREAM_STATE_INIT;
+  //   // }
     if (radioBLE.bufferBLEHeadReadyToMove()) { // Is there a stream packet waiting to get sent to the Host?
       radioBLE.bufferBLEHeadMove();
       // Serial.println("moved head");
@@ -99,21 +105,21 @@ void loop() {
       // radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
       radioBLE.bufferBLETailSend();
     }
-
-    // if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to connected device?
-    //   if (radioBLE.bufferStreamTimeout() && (radioBLE.bufferBLE + radioBLE.head)->bytesIn > 7  && radioBLE.bufferSerialHasData()) {
-    //     radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
-    //     return;
-    //   }
-    //   // Has 3ms passed since the last time the serial port was read. Only the
-    //   //  first packet get's sent from here
-    //   if (radioBLE.bufferSerialTimeout() && radioBLE.bufferSerial.numberOfPacketsSent == 0 ) {
-    //     // In order to do checksumming we must only send one packet at a time
-    //     //  this stands as the first time we are going to send a packet!
-    //     radioBLE.sendPacketToConnectedDevice();
-    //   }
-    // }
-  }
+  //
+  //   // if (radioBLE.bufferSerialHasData()) { // Is there data from the Pic waiting to get sent to connected device?
+  //   //   if (radioBLE.bufferStreamTimeout() && (radioBLE.bufferBLE + radioBLE.head)->bytesIn > 7  && radioBLE.bufferSerialHasData()) {
+  //   //     radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
+  //   //     return;
+  //   //   }
+  //   //   // Has 3ms passed since the last time the serial port was read. Only the
+  //   //   //  first packet get's sent from here
+  //   //   if (radioBLE.bufferSerialTimeout() && radioBLE.bufferSerial.numberOfPacketsSent == 0 ) {
+  //   //     // In order to do checksumming we must only send one packet at a time
+  //   //     //  this stands as the first time we are going to send a packet!
+  //   //     radioBLE.sendPacketToConnectedDevice();
+  //   //   }
+  //   // }
+  // }
 
   // if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
   //   radioBLE.bufferBLE->state = radioBLE.STREAM_STATE_INIT;
