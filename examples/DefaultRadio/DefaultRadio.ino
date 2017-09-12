@@ -47,7 +47,7 @@ void loop() {
   // if ((radioBLE.spBuffer.state == radioBLE.STREAM_STATE_READY || radioBLE.bufferBLEHeadReadyToMove()) && radioBLE.bufferStreamTimeout()) {
   //   radioBLE.bufferSerialReset(OPENBCI_NUMBER_SERIAL_BUFFERS);
   // }
-
+//
 //   if (Serial.available()) {
 //     // char newChar = Serial.read();
 //
@@ -60,7 +60,9 @@ void loop() {
 //     radioBLE.bufferBLEAddChar(radioBLE.bufferBLE, Serial.read());
 //
 //     if (radioBLE.bufferBLE->state == radioBLE.STREAM_STATE_READY) {
-//       RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET);
+//       // RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET);
+//       while (! RFduinoBLE.send((const char *)radioBLE.bufferBLE->data, BYTES_PER_BLE_PACKET))
+//         ;
 //       radioBLE.bufferBLEReset(radioBLE.bufferBLE);
 //     }
 //

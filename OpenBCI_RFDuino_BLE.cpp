@@ -343,13 +343,13 @@ void OpenBCI_RFDuino_BLE_Class::bufferBLETailMove(void) {
 void OpenBCI_RFDuino_BLE_Class::bufferBLETailSend(void) {
   if (!connectedDevice) return;
 
-  // int lastTail = tail;
+  int lastTail = tail;
 
   // This will simply add to the tx buffer
-  // RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
+  RFduinoBLE.send((const char *)(bufferBLE + lastTail)->data, BYTES_PER_BLE_PACKET);
   // This will wait for the TX buffers to clear
-  while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
-    ;  // all tx buffers in use (can't send - try again later)
+  // while (! RFduinoBLE.send((const char *)(bufferBLE + tail)->data, BYTES_PER_BLE_PACKET))
+    // ;  // all tx buffers in use (can't send - try again later)
   bufferBLETailMove();
 
 }
