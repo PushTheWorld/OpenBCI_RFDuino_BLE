@@ -10,8 +10,8 @@
 *     is inspired directly from their work.
 */
 
-#ifndef __OpenBCI_Radio_Definitions__
-#define __OpenBCI_Radio_Definitions__
+#ifndef __OpenBCI_RFDuino_Definitions__
+#define __OpenBCI_RFDuino_Definitions__
 
 // These are helpful maximums to reference nad use in the code
 #define RFDUINO_BLE_MAX_PACKET_SIZE_BYTES 20
@@ -22,20 +22,27 @@
 
 #define OPENBCI_TIMEOUT_PACKET_NRML_uS 500 // The time to wait before determining a multipart packet is ready to be send
 #define OPENBCI_TIMEOUT_PACKET_STREAM_uS 88 // Slightly longer than it takes to send a serial byte at 115200
+#define OPENBCI_TIMEOUT_PACKET_STREAM_uS_9600 950 // Slightly longer than it takes to send a serial byte at 9600
 #define OPENBCI_TIMEOUT_PACKET_POLL_MS 48 // Poll time out length for sending null packet from device to host
 #define OPENBCI_TIMEOUT_COMMS_MS 270 // Comms failure time out length. Used only by Host.
 
+#define BYTES_PER_SAMPLE 6
+#define BYTES_PER_CHANNEL 3
+#define POSITION_ACCEL_BYTE 19
+#define BYTES_PER_ACCEL 6
+#define NUM_BLE_PACKETS 10
+#define BYTES_PER_BLE_PACKET 20
+#define BYTES_PER_TINY_BUF 99
 // Stream byte stuff
 #define OPENBCI_STREAM_BYTE_START 0xA0
 #define OPENBCI_STREAM_BYTE_STOP 0xC0
-
+// 4101000000000000000000000000000000000000000000000000000000000000C04102000000000000000000000000000000000000000000000000000000000000C04103000000000000000000000000000000000000000000000000000000000000C0
 // Max buffer lengths
-#define OPENBCI_BUFFER_LENGTH_MULTI 528 // 16 * 33
+#define OPENBCI_BUFFER_LENGTH_MULTI 100 // 16 * 33
 
 // Number of buffers
 #define OPENBCI_NUMBER_RADIO_BUFFERS 1
-#define OPENBCI_NUMBER_SERIAL_BUFFERS 16
-#define OPENBCI_NUMBER_STREAM_BUFFERS 25 // This should be at least one greater than poll time divided by packet interval to allow for the ack counter.
+#define OPENBCI_NUMBER_SERIAL_BUFFERS 2
 
 // These are the three different possible configuration modes for this library
 #define OPENBCI_MODE_DEVICE 0
@@ -97,6 +104,7 @@
 #define OPENBCI_HOST_CMD_TIME_PIN_HIGH          0x08
 #define OPENBCI_HOST_CMD_TIME_PIN_LOW           0x09
 #define OPENBCI_HOST_CMD_BAUD_HYPER             0x0A
+#define OPENBCI_HOST_CMD_BAUD_BLE               0x0B
 
 // Raw data packet types/codes
 #define OPENBCI_PACKET_TYPE_RAW_AUX      = 3; // 0011
@@ -106,6 +114,7 @@
 
 // Possible baud rates
 #define OPENBCI_BAUD_RATE_DEFAULT 115200
+#define OPENBCI_BAUD_RATE_BLE 9600
 
 // Private Radio Places
 #define OPENBCI_HOST_PRIVATE_POS_KEY 1

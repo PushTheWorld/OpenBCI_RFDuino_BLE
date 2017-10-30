@@ -1,0 +1,16 @@
+{
+  "name": "extras-js",
+  "version": "1.0.0",
+  "description": "Set of examples and test files written in node-js for the rfduino ble",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AJ Keller",
+  "license": "MIT",
+  "dependencies": {
+    "noble": "^1.8.1",
+    "openbci-utilities": "^0.1.2",
+    "serialport": "^4.0.7"
+  }
+}

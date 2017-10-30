@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OpenBCI Cyton BLE RFDuino Firmware
 
 <p align="center">
@@ -8,6 +9,13 @@
 </p>
 
 ## Welcome!
+=======
+[![Join the chat at https://gitter.im/OpenBCI/openbci-js-sdk](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OpenBCI/openbci-js-sdk?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+# OpenBCI_RFDuino_BLE
+
+Libraries and firmware for OpenBCI Radio Module.
+>>>>>>> e44098de606f028da5ae3023162c0cc4a9fc2d25
 
 First and foremost, Welcome! :tada: Willkommen! :confetti_ball: Bienvenue! :balloon::balloon::balloon:
 
